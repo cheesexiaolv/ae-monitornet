@@ -1,0 +1,39 @@
+AE Throughput Monitor (modid: aetm) - third party notices
+==========================================================
+
+This mod is a derivative work. The ME throughput monitor parts are ported to
+Minecraft 1.19.2 from AdvancedAE, which itself derives from GTLCore's
+throughput monitoring. Only the "advanced" throughput monitor (its sampling
+history, unit derivation, chart and the terminal UI) is our own implementation.
+
+1. AdvancedAE  (https://github.com/pedroksl/AdvancedAE)
+   Author: Pedroksl
+   License: GNU LGPL-3.0
+   Used for: the ME throughput monitor part (ThroughputMonitorPart), its
+   sliding-window rate cache (ThroughputCache) and the per-tick sampling
+   behaviour, which this mod ports from 1.20.1 down to 1.19.2. The rate unit
+   cycling (per tick / second / minute / 10 minutes) and the "monitor a
+   configured item/fluid and draw an icon + amount + rate on the part face"
+   behaviour come from that implementation.
+
+2. Applied Energistics 2  (https://github.com/AppliedEnergistics/Applied-Energistics-2)
+   License: GNU LGPL-3.0
+   Used as: required dependency and API surface (parts, grid services, menus,
+   screens, widgets, storage watchers). No AE2 source file is copied into this
+   mod; AE2 is compiled against, never bundled.
+
+3. GTLCore  (throughput monitoring lineage)
+   License: GNU LGPL-3.0
+   AdvancedAE's throughput monitor descends from GTLCore's implementation; the
+   ported code therefore carries that lineage as well.
+
+Original work in this mod (not derived from the projects above):
+  - ThroughputHistory: discontinuity-aware sampling history, per-window series
+    derivation (amount / rate / acceleration) with Tukey-fence trimming and
+    bucket downsampling.
+  - ThroughputChart: the in-GUI line chart renderer.
+  - AdvancedThroughputMonitorPart, the storage monitor terminal (part + item),
+    the draggable per-target chart windows, the block highlight ("locate")
+    feature, the terminal row merging/sync protocol and all GUI textures.
+
+All trademarks and copyrights remain with their respective owners.

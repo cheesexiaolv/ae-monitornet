@@ -1,0 +1,44 @@
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
+
+# Files from Forge MDK
+forge*changelog.txt
+
+# ---- 本项目补充 ----
+# 第三方依赖 jar（别人的 mod，不能随仓库分发）
+libs/*.jar
+# 自己打的 mod jar：请用 GitHub Releases 发布，不要提交进仓库
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+# 日志 / 崩溃报告
+logs/
+crash-reports/
+*.log
+.mixin.out/
+# 参考源码与临时素材（体积大、且属第三方，勿分发）
+reference/
+legacy/
+zip/
+art/_preview_*.png
+art/_gen_*.ps1
+art/_verify_*.ps1

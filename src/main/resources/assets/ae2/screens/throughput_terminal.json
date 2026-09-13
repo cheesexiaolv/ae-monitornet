@@ -1,0 +1,30 @@
+{
+  "$schema": "schema.json",
+  "includes": ["common/common.json", "common/player_inventory.json"],
+  "text": {
+    "dialog_title": {
+      "text": {
+        "translate": "item.aetm.throughput_terminal"
+      },
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    },
+    "status_text": {
+      "text": {
+        "translate": "gui.aetm.terminal.status"
+      },
+      "position": {
+        "left": 8,
+        "top": 21
+      }
+    }
+  },
+  "widgets": {
+    "scrollbar": {
+      "left": 175,
+      "top": 35
+    }
+  }
+}

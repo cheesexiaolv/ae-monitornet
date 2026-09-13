@@ -1,0 +1,58 @@
+package com.cheesexiaolv.aetm;
+
+import com.cheesexiaolv.aetm.Init.ModItems;
+import com.cheesexiaolv.aetm.menu.AdvancedThroughputMonitorMenu;
+import com.cheesexiaolv.aetm.menu.ThroughputTerminalMenu;
+import com.cheesexiaolv.aetm.menu.ThroughputTerminalWirelessMenu;
+
+import net.minecraft.core.Registry;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegisterEvent;
+
+import appeng.api.features.GridLinkables;
+import appeng.core.AppEng;
+import appeng.items.tools.powered.WirelessTerminalItem;
+
+/**
+ * 公共（双端）注册。
+ *
+ * <p>AE2 的 {@code MenuTypeBuilder.build()} 会把菜单类型排入 AE2 自己的注册队列，
+ * 但该队列只对 AE2 自己的菜单在正确时机 flush。第三方按 ae2wtlib 的做法，
+ * 在 {@code RegisterEvent(MENU_REGISTRY)} 里用 Forge 注册表真注册一次。
+ */
+@Mod.EventBusSubscriber(modid = Aetm.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+public class CommonEvents {
+
+    @SubscribeEvent
+    public static void onRegisterMenu(RegisterEvent event) {
+        if (event.getRegistryKey().equals(Registry.MENU_REGISTRY)) {
+            ForgeRegistries.MENU_TYPES.register(
+                    AppEng.makeId("advanced_throughput_monitor"),
+                    AdvancedThroughputMonitorMenu.TYPE);
+            ForgeRegistries.MENU_TYPES.register(
+                    AppEng.makeId("throughput_terminal"),
+                    ThroughputTerminalMenu.TYPE);
+            ForgeRegistries.MENU_TYPES.register(
+                    AppEng.makeId("wireless_throughput_terminal"),
+                    ThroughputTerminalWirelessMenu.TYPE);
+        }
+    }
+
+    /**
+     * 无线终端要能被安全终端"链接"，必须登记进 AE2 的 {@code GridLinkables}
+     * （AE2 自己在 {@code AppEngBase} 里对无线终端做同样的事）。
+     *
+     * <p>⚠️ 必须放在 {@code FMLCommonSetupEvent}：这里要读自己注册表里的物品
+     * （{@code RegistryObject.get()}），在 mod 构造器里读会抛
+     * "Registry Object not present"。
+     */
+    @SubscribeEvent
+    public static void onCommonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> GridLinkables.register(
+                ModItems.WIRELESS_THROUGHPUT_TERMINAL.get(),
+                WirelessTerminalItem.LINKABLE_HANDLER));
+    }
+}
