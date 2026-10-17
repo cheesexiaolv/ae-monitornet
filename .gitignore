@@ -42,3 +42,6 @@ zip/
 art/_preview_*.png
 art/_gen_*.ps1
 art/_verify_*.ps1
+# 原版（Mojang）贴图：只作为本地拼图参考，不进仓库
+art/inventory.png
+art/generic_54.png
