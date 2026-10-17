@@ -16,7 +16,7 @@
 
 # AE Throughput Monitor (aetm) / 存储监控终端
 
-**[English](#english) ｜ [中文](#中文) ｜ [版本兼容 / Version support](docs/PORTING.md)**
+**[English](#english) ｜ [中文](#中文)**
 
 ---
 
@@ -64,9 +64,6 @@ The ME throughput monitor parts are **ported to 1.19.2 from
 descends from GTLCore's throughput monitoring. The advanced monitor's sampling history,
 the line chart, the terminal and its chart windows are this project's own work.
 See `NOTICE.txt` for the full attribution list and for what is derived vs. original.
-
-`LICENSE.txt` and `CREDITS.txt` are the files shipped with the Forge MDK template
-(Forge's own license/credits) and are kept as-is.
 
 ### Note on authorship
 
@@ -118,12 +115,13 @@ compiled and play-tested by a human before release.
 ME 吞吐量监控器系列部件是**从 [AdvancedAE](https://github.com/pedroksl/AdvancedAE)（作者 Pedroksl，LGPL-3.0）移植到 1.19.2 的**，而后者又源自 GTLCore 的吞吐量监控。高级监控器的采样历史、折线图、终端及其曲线子窗口是本项目自己的实现。
 完整的署名列表、以及"哪些是移植、哪些是原创"的划分见 `NOTICE.txt`。
 
-`LICENSE.txt` 与 `CREDITS.txt` 是 Forge MDK 模板自带的文件（Forge 自身的许可/致谢），原样保留。
-
 ### 关于代码来源
 
 本仓库绝大部分代码由 AI 助手（DeepSeek Harness）根据仓库所有者的需求、评审与实机测试编写；发布前经过人工审阅、编译与实机游玩验证。
 
 ### 版本支持
 
-当前基线（MC / Forge / AE2）与其它版本（1.20.1、1.21.x）的移植笔记见 [`docs/PORTING.md`](docs/PORTING.md)。
+- Minecraft **1.19.2**，Forge **43**（实机 43.4.12 及以上；`forge_version_range` 为 `[43,44)`）
+- Applied Energistics 2 **12.9.9**
+- Java **17**
+- 可选：AE2WTLib 12.9.7（通用终端集成）、JEI、Jade
