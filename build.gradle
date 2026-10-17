@@ -29,6 +29,16 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
             property 'forge.enabledGameTestNamespaces', mod_id
 
+            // --- Mixin 参数：让 refmap 正确重映射（AE2、Rubidium 等都依赖 refmap）---
+            // 注意：千万不要再设置 mixin.env.disableRefMap=true，那会禁用 refmap，
+            // 导致以 SRG 名（如 m_122372_）为目标的 mixin 找不到方法而崩溃。
+            //
+            // ⚠️ 必须放在 configureEach 里：这几行原先只写在 client run 里，于是 runServer
+            // 启动时 AE2 自己的 spatial.MinecraftServerMixin 找不到 m_129815_ 而硬崩
+            // （InvalidInjectionException → MixinTransformerError）。server/data 也要继承。
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -38,12 +48,6 @@ minecraft {
 
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
-
-            // --- Mixin 参数：让 refmap 正确重映射（AE2、Rubidium 等都依赖 refmap）---
-            // 注意：千万不要再设置 mixin.env.disableRefMap=true，那会禁用 refmap，
-            // 导致以 SRG 名（如 m_122372_）为目标的 mixin 找不到方法而崩溃。
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
         }
 
         server {
@@ -80,6 +84,18 @@ dependencies {
     // 避免生产 jar 里 SRG 方法名（m_xxxxx_）在开发环境缺失导致的崩溃。
     runtimeOnly fg.deobf("blank:jade:8.9.2")
     runtimeOnly fg.deobf("blank:jei:11.39.0.1068")
+
+    // AE2WTLib：无线存储监控终端要注册进它的「通用终端 / WUT」体系（ItemWT / WUTHandler / WTMenuHost）。
+    // 是【软依赖】：jar 里不打包它，运行期由整合包提供；没装时相关类一个都不会被加载
+    // （入口是 xmod/ae2wtlib/AE2WtLibPlugin 的 ModList 守卫，只有 AE2WtLibHook 里出现 de.mari_023.* 类型）。
+    // compileOnly 保证编译通过；runtimeOnly 让开发环境也能实测「在 WUT 里切到我们的终端」。
+    // 已验证过：把这四行 runtimeOnly 注释掉、即完全不加载 AE2WTLib 时，本 mod 依然能正常启动（软依赖守卫有效）。
+    compileOnly fg.deobf("blank:AE2WTLib:12.9.7")
+    runtimeOnly fg.deobf("blank:AE2WTLib:12.9.7")
+    // AE2WTLib 的三个 mandatory 依赖（开发环境实测用；正式包由整合包提供）
+    runtimeOnly fg.deobf("blank:architectury:6.6.92-forge")
+    runtimeOnly fg.deobf("blank:cloth-config:8.3.115-forge")
+    runtimeOnly fg.deobf("blank:curios-forge:1.19.2-5.1.6.3")
 }
 
 

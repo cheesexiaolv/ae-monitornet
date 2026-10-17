@@ -73,3 +73,12 @@ mandatory=true
 versionRange="[12.9.9,13.0.0)"
 ordering="AFTER"
 side="BOTH"
+
+# AE2WTLib：无线存储监控终端可以注册进它的「通用终端 / WUT」，在通用终端里切换到本终端。
+# 纯软依赖：没装时该终端照旧当普通 AE2 无线终端用（安全终端链接 + WAP 范围），相关类一个都不会被加载。
+[[dependencies.${mod_id}]]
+modId="ae2wtlib"
+mandatory=false
+versionRange="[12.9.7,)"
+ordering="AFTER"
+side="BOTH"

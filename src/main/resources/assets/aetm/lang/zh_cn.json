@@ -3,6 +3,7 @@
   "item.aetm.advanced_throughput_monitor": "高级 ME 吞吐量监控器",
   "item.aetm.throughput_terminal": "存储监控终端",
   "item.aetm.wireless_throughput_terminal": "无线存储监控终端",
+  "key.ae2.wireless_throughput_terminal": "打开无线存储监控终端",
   "item.aetm.throughput_monitor_configurator": "吞吐量监控配置器",
   "itemGroup.aetm": "AE 吞吐量监控",
   "gui.aetm.watched": "监控对象: %s",

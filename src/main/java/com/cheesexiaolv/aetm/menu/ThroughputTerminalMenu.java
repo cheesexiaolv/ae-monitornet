@@ -12,8 +12,9 @@ import com.cheesexiaolv.aetm.Logic.TerminalSettings;
 import com.cheesexiaolv.aetm.Logic.TerminalSettingsNbt;
 import com.cheesexiaolv.aetm.Logic.ThroughputHistory;
 import com.cheesexiaolv.aetm.Parts.AdvancedThroughputMonitorPart;
+import com.cheesexiaolv.aetm.Parts.IMonitorRef;
 import com.cheesexiaolv.aetm.Parts.ITerminalSettingsHost;
-import com.cheesexiaolv.aetm.Parts.ThroughputMonitorPart;
+import com.cheesexiaolv.aetm.Parts.MonitorRefs;
 import com.cheesexiaolv.aetm.Parts.ThroughputTerminalPart;
 import com.cheesexiaolv.aetm.network.AetmNetwork;
 import com.cheesexiaolv.aetm.network.TerminalRow;
@@ -36,12 +37,13 @@ import appeng.menu.guisync.GuiSync;
 import appeng.menu.implementations.MenuTypeBuilder;
 
 /**
- * 聚合吞吐终端的服务端菜单。
+ * 存储监控终端的服务端菜单。
  *
  * <p>工作方式（参照 AE2 自己的样板管理终端）：
  * <ol>
- *   <li>每个 tick 用 {@code grid.getActiveMachines(ThroughputMonitorPart.class)} 枚举本网络的监控器
- *       （离线的、区块没加载的自然不在集合里 → 终端里也就看不到）；</li>
+ *   <li>每个 tick 遍历 {@code grid.getMachineClasses()}，把<b>本网络的吞吐量监控器</b>枚举出来
+ *       —— 包括 aetm 自己的（普通/高级）以及装了 <b>aebackports</b> 时它那边的监控器
+ *       （兼容桥见 {@link MonitorRefs}/{@link IMonitorRef}；离线的、区块没加载的自然不在集合里）；</li>
  *   <li><b>按被监控的 key 合并成一行</b>——同一网络里多个监控器盯同一个 key 时读到的是同一份数据，
  *       所以合并无损，多出来的监控器只作为「来源」列出；</li>
  *   <li>行数据走自建包（结构变化发全量、否则只发数值），界面状态走 {@code @GuiSync}。</li>
@@ -252,31 +254,45 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
     }
 
     /**
-     * 收集本网络上的所有吞吐量监控器。
+     * 收集本网络上的所有吞吐量监控器：
+     * <b>aetm 自己的</b>（普通 + 高级）以及<b>装了 aebackports 时它的</b>监控器。
      *
      * <p>⚠️ 必须像 AE2 的样板管理终端那样<b>遍历 {@code getMachineClasses()} 再按可赋值性筛选</b>：
      * AE2 的 {@code Grid} 是按节点宿主的<b>运行时类</b>登记机器的（{@code Grid.java:105}
      * {@code gridNode.getOwner().getClass()}），所以直接
      * {@code grid.getActiveMachines(ThroughputMonitorPart.class)} 只会命中普通监控器，
      * 派生出来的高级监控器（{@code AdvancedThroughputMonitorPart}）会漏掉。
+     *
+     * <p>aebackports 的部件是另一个包里的另一个类（不认识我们的基类），所以这里改走
+     * {@link MonitorRefs#isMonitorClass} + {@link MonitorRefs#of}：它内部对 aebackports 那侧
+     * 只在"装了该 mod"时才反射解析，并统一包装成 {@link IMonitorRef} 给 {@link ServerRow} 用。
      */
     private void collectMonitors(IGrid grid, Map<AEKey, ServerRow> byKey) {
         for (var machineClass : grid.getMachineClasses()) {
-            if (!ThroughputMonitorPart.class.isAssignableFrom(machineClass)) {
+            if (!MonitorRefs.isMonitorClass(machineClass)) {
                 continue;
             }
-            collectFromClass(grid, machineClass.asSubclass(ThroughputMonitorPart.class), byKey);
+            collectFromClass(grid, machineClass, byKey);
         }
     }
 
-    private <T extends ThroughputMonitorPart> void collectFromClass(IGrid grid, Class<T> monitorClass,
-            Map<AEKey, ServerRow> byKey) {
+    /**
+     * 把一个具体零件类下的所有活动零件收进行表。
+     *
+     * <p>这里用的是"原始 Class + getActiveMachines(raw)"：aebackports 的类我们拿不到泛型类型，
+     * 也不能 import，所以统一按 {@code Class<?>} 处理，再交给 {@link MonitorRefs#of} 包装。
+     */
+    private void collectFromClass(IGrid grid, Class<?> monitorClass, Map<AEKey, ServerRow> byKey) {
         for (var monitor : grid.getActiveMachines(monitorClass)) {
-            AEKey key = monitor.getDisplayed();
+            IMonitorRef ref = MonitorRefs.of(monitor);
+            if (ref == null) {
+                continue;
+            }
+            AEKey key = ref.displayed();
             if (key == null) {
                 continue;
             }
-            byKey.computeIfAbsent(key, ServerRow::new).addMonitor(monitor);
+            byKey.computeIfAbsent(key, ServerRow::new).addMonitor(ref);
         }
     }
 
@@ -640,11 +656,11 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
         }
         // 与悬停提示里的来源列表同序（ServerRow.computeValues 已按 维度→x→y→z 排好）
         var monitor = row.monitors.get(0);
-        var pos = monitor.getBlockEntity().getBlockPos();
-        var level = monitor.getLevel();
-        String dimension = level == null ? "" : level.dimension().location().toString();
+        var pos = monitor.pos();
+        var dimension = monitor.dimension();
         AetmNetwork.sendToPlayer(player,
-                TerminalRowsPacket.highlight(index, pos, dimension, LOCATE_HIGHLIGHT_TICKS));
+                TerminalRowsPacket.highlight(index, pos, dimension == null ? "" : dimension.toString(),
+                        LOCATE_HIGHLIGHT_TICKS));
     }
 
     private void cycleRowWindow() {
@@ -736,24 +752,32 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
         };
     }
 
-    /** 服务端一行（可能由多个监控器供给）。 */
+    /**
+     * 服务端一行（可能由多个监控器供给）。
+     *
+     * <p>持的是 {@link IMonitorRef} 而不是具体的零件类型 —— 这样 aetm 自家的监控器与
+     * aebackports 的监控器能混在同一张表里（同 key 合并、按坐标排序、选最细档位当数值来源，
+     * 这些逻辑都与实现无关）。
+     */
     private static final class ServerRow {
 
         /** 来源排序：维度 → x → y → z（AE2 的 Set 顺序不保证，排一下才稳定）。 */
-        private static final Comparator<ThroughputMonitorPart> MONITOR_ORDER = Comparator
-                .comparing((ThroughputMonitorPart monitor) -> monitor.getLevel() == null
-                        ? ""
-                        : monitor.getLevel().dimension().location().toString())
-                .thenComparingInt(monitor -> monitor.getBlockEntity().getBlockPos().getX())
-                .thenComparingInt(monitor -> monitor.getBlockEntity().getBlockPos().getY())
-                .thenComparingInt(monitor -> monitor.getBlockEntity().getBlockPos().getZ());
+        private static final Comparator<IMonitorRef> MONITOR_ORDER = Comparator
+                .comparing((IMonitorRef monitor) -> {
+                    var dimension = monitor.dimension();
+                    return dimension == null ? "" : dimension.toString();
+                })
+                .thenComparingInt(monitor -> monitor.pos().getX())
+                .thenComparingInt(monitor -> monitor.pos().getY())
+                .thenComparingInt(monitor -> monitor.pos().getZ());
 
         final AEKey key;
-        final List<ThroughputMonitorPart> monitors = new ArrayList<>();
+        final List<IMonitorRef> monitors = new ArrayList<>();
+        /** 有历史曲线的高级监控器（aetm 专属；aebackports 的部件没有历史，这里恒为 null）。 */
         @Nullable
         AdvancedThroughputMonitorPart historySource;
         @Nullable
-        ThroughputMonitorPart valueSource;
+        IMonitorRef valueSource;
         long amount;
         double ratePerTick;
 
@@ -761,9 +785,9 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
             this.key = key;
         }
 
-        void addMonitor(ThroughputMonitorPart monitor) {
+        void addMonitor(IMonitorRef monitor) {
             this.monitors.add(monitor);
-            if (this.historySource == null && monitor instanceof AdvancedThroughputMonitorPart advanced) {
+            if (this.historySource == null && monitor.historySource() instanceof AdvancedThroughputMonitorPart advanced) {
                 this.historySource = advanced;
             }
         }
@@ -777,32 +801,39 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
             // 这样数值来源、悬停提示里的来源列表、以及结构指纹（决定要不要重发全量）每次都是一致的
             this.monitors.sort(MONITOR_ORDER);
 
-            ThroughputMonitorPart source = this.historySource;
+            IMonitorRef source = null;
+            if (this.historySource != null) {
+                // 高级监控器是"自家零件"，找到与它对应的那一个包装
+                for (var monitor : this.monitors) {
+                    if (monitor.historySource() == this.historySource) {
+                        source = monitor;
+                        break;
+                    }
+                }
+            }
             if (source == null) {
                 source = this.monitors.get(0);
                 for (var monitor : this.monitors) {
-                    if (monitor.getRoutineOrdinal() < source.getRoutineOrdinal()) {
+                    if (monitor.routineOrdinal() < source.routineOrdinal()) {
                         source = monitor;
                     }
                 }
             }
             this.valueSource = source;
-            this.amount = source.getAmount();
-            this.ratePerTick = source.getLastReportedValue() / Math.max(1, source.getRoutineTicks());
+            this.amount = source.amount();
+            this.ratePerTick = source.lastReportedValue() / Math.max(1, source.routineTicks());
         }
 
         TerminalRow toTerminalRow(ITerminalSettingsHost settings) {
             var setting = settings.getSetting(this.key);
             var sources = new ArrayList<TerminalRow.Source>(this.monitors.size());
             for (var monitor : this.monitors) {
-                String dimension = monitor.getLevel() == null
-                        ? ""
-                        : monitor.getLevel().dimension().location().toString();
+                var dimension = monitor.dimension();
                 sources.add(new TerminalRow.Source(
-                        monitor.getBlockEntity().getBlockPos(),
-                        dimension,
-                        monitor.getRoutineOrdinal(),
-                        monitor instanceof AdvancedThroughputMonitorPart));
+                        monitor.pos(),
+                        dimension == null ? "" : dimension.toString(),
+                        monitor.routineOrdinal(),
+                        monitor.advanced()));
             }
             return new TerminalRow(this.key, this.amount, this.ratePerTick, this.historySource != null,
                     setting.largeUnit(), setting.routineOrdinal(),

@@ -7,6 +7,8 @@ import com.cheesexiaolv.aetm.client.gui.WirelessThroughputTerminalScreen;
 import com.cheesexiaolv.aetm.menu.AdvancedThroughputMonitorMenu;
 import com.cheesexiaolv.aetm.menu.ThroughputTerminalMenu;
 import com.cheesexiaolv.aetm.menu.ThroughputTerminalWirelessMenu;
+import com.cheesexiaolv.aetm.xmod.ae2wtlib.AE2WtLibClientHook;
+import com.cheesexiaolv.aetm.xmod.ae2wtlib.AE2WtLibPlugin;
 
 import appeng.api.util.AEColor;
 import appeng.init.client.InitScreens;
@@ -14,6 +16,7 @@ import appeng.init.client.InitScreens;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
@@ -49,11 +52,17 @@ public class ClientEvents {
                     ThroughputTerminalMenu.TYPE,
                     ThroughputTerminalScreen::new,
                     "/screens/throughput_terminal.json");
-            // 无线版复用同一份样式（版式完全一致，只是菜单类型不同）
-            InitScreens.register(
-                    ThroughputTerminalWirelessMenu.TYPE,
-                    WirelessThroughputTerminalScreen::new,
-                    "/screens/throughput_terminal.json");
+            // 无线版复用同一份样式（版式完全一致，只是菜单类型不同）。
+            // 装了 AE2WTLib 时改用「感知通用终端」的界面：从通用终端里打开时要有"切换到下一个终端"的按钮
+            // （界面的 WUT 判定放在 xmod 包里，避免没装 AE2WTLib 时加载到 de.mari_023.* 类型）。
+            if (ModList.get().isLoaded(AE2WtLibPlugin.MOD_ID)) {
+                AE2WtLibClientHook.registerWirelessTerminalScreen("/screens/throughput_terminal.json");
+            } else {
+                InitScreens.register(
+                        ThroughputTerminalWirelessMenu.TYPE,
+                        WirelessThroughputTerminalScreen::new,
+                        "/screens/throughput_terminal.json");
+            }
         });
     }
 }

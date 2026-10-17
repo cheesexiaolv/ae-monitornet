@@ -48,11 +48,20 @@ public class CommonEvents {
      * <p>⚠️ 必须放在 {@code FMLCommonSetupEvent}：这里要读自己注册表里的物品
      * （{@code RegistryObject.get()}），在 mod 构造器里读会抛
      * "Registry Object not present"。
+     *
+     * <p><b>幂等</b>：装了 AE2WTLib 时 {@code AE2WtLibHook.init()} 也会兜一次底，
+     * 而 {@code GridLinkables.register} 对同一个物品重复登记会
+     * {@code Preconditions.checkState} 抛 {@code IllegalStateException}
+     * （两次注册都在 {@code enqueueWork} 的延迟任务里，执行顺序不确定），
+     * 所以这里也先查再登记。
      */
     @SubscribeEvent
     public static void onCommonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(() -> GridLinkables.register(
-                ModItems.WIRELESS_THROUGHPUT_TERMINAL.get(),
-                WirelessTerminalItem.LINKABLE_HANDLER));
+        event.enqueueWork(() -> {
+            var item = ModItems.WIRELESS_THROUGHPUT_TERMINAL.get();
+            if (GridLinkables.get(item) == null) {
+                GridLinkables.register(item, WirelessTerminalItem.LINKABLE_HANDLER);
+            }
+        });
     }
 }

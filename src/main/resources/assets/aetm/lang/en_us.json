@@ -3,6 +3,7 @@
   "item.aetm.advanced_throughput_monitor": "Advanced ME Throughput Monitor",
   "item.aetm.throughput_terminal": "ME Storage Monitor Terminal",
   "item.aetm.wireless_throughput_terminal": "Wireless ME Storage Monitor Terminal",
+  "key.ae2.wireless_throughput_terminal": "Open Wireless Storage Monitor Terminal",
   "item.aetm.throughput_monitor_configurator": "Throughput Monitor Configurator",
   "itemGroup.aetm": "AE Throughput Monitor",
   "gui.aetm.watched": "Watched: %s",
