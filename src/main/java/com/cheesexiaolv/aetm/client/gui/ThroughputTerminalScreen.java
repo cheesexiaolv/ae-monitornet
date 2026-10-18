@@ -68,7 +68,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
      * <p>所以这一行必须是一条完整的"横截面"：x 0…194 的左右边框、面板底色、滚动条凹槽的左右边
      * （x 173…188）。上下收口属于头部块（y ≤ 33）与底部块（y ≥ 51），不要画在这一行里。
      */
-    private static final int TEX_BODY_Y = 34;
+    private static final int TEX_BODY_Y = 36;
     /** 旧版"平铺 17 行"用的高度，现已不使用（保留常量避免误改别处引用）。 */
     private static final int TEX_BODY_H = 17;
 
