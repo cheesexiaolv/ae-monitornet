@@ -65,6 +65,18 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     private static final int TEX_BODY_Y = 20;
     private static final int TEX_BODY_H = 17;
 
+    // ---- 阶梯收口补丁（悬挑段底部那 19×3 像素）----
+    /**
+     * 贴图里收口补丁的位置：**右上角空闲区 (195,0)…(213,2)**。
+     *
+     * <p>补丁宽度 = {@code GUI_WIDTH - FOOTER_W} = 19（自动算，别改），高度 = {@link #STEP_H}。
+     * 想改成 4 行收口：把 {@code STEP_H} 改 4，并在贴图里往下多画一行（补丁区高 4）。
+     */
+    private static final int TEX_STEP_X = 195;
+    private static final int TEX_STEP_Y = 0;
+    /** 收口高度（行数）。 */
+    private static final int STEP_H = 3;
+
     private static final int LIST_X = 8;
     /** 列表宽度：右边界 172，滚动条轨道在 174..187（JSON 里 left=175）。 */
     private static final int LIST_W = 164;
@@ -232,11 +244,10 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         }
 
         // 悬挑段（滑槽列右边那截，x=176..194）在阶梯处收口：
-        // 原版 AE 终端这里是 2 行 #555555 + 1 行 #000000（贴图里没法烘，因为中段横带要能竖向平铺）
-        GuiComponent.fill(poseStack, offsetX + FOOTER_W, offsetY + bottom - 3,
-                offsetX + GUI_WIDTH, offsetY + bottom - 1, 0xFF555555);
-        GuiComponent.fill(poseStack, offsetX + FOOTER_W, offsetY + bottom - 1,
-                offsetX + GUI_WIDTH, offsetY + bottom, 0xFF000000);
+        // 收口只有 STEP_H 行高、且位置随列表高度变化；中段横带是竖向平铺的，烘进横带会每格重复一次，
+        // 所以单独从贴图取一块 19×STEP_H 的补丁（贴图坐标见 TEX_STEP_X/TEX_STEP_Y）贴到阶梯处。
+        blit(poseStack, offsetX + FOOTER_W, offsetY + bottom - STEP_H,
+                TEX_STEP_X, TEX_STEP_Y, GUI_WIDTH - FOOTER_W, STEP_H);
 
         // ⚠️ 列表凹槽必须画在 drawBG（widget 层之前）：
         //    AE2 的 Scrollbar 是在 widget 前景层画滑块的，画在 drawFG 里会把滑块整个盖掉。
