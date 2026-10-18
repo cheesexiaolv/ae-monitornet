@@ -251,11 +251,18 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
                     0f, TEX_BODY_Y, GUI_WIDTH, 1, 256, 256);
         }
 
-        // 悬挑段（滑槽列右边那截，x=176..194）在阶梯处收口：
-        // 收口只有 STEP_H 行高、且位置随列表高度变化；中段横带是竖向平铺的，烘进横带会每格重复一次，
-        // 所以单独从贴图取一块 19×STEP_H 的补丁（贴图坐标见 TEX_STEP_X/TEX_STEP_Y）贴到阶梯处。
-        blit(poseStack, offsetX + FOOTER_W, offsetY + bottom - STEP_H,
-                TEX_STEP_X, TEX_STEP_Y, GUI_WIDTH - FOOTER_W, STEP_H);
+        // 悬挑段补齐（方案 C）：底部块只有 176 宽，右边 x=176..194 这条竖条会露出背后的世界。
+        // 这里用"取中段样行上的 1 个像素、拉伸"的方式把它补成 面板底色 + 右边框：
+        //   1×1 的源像素被拉伸成任意大小 = 纯色填充（不会出现条纹/错位），因此与贴图配色天然一致。
+        int overW = GUI_WIDTH - FOOTER_W;
+        if (overW > 1) {
+            // 主体色：取中段样行、右边界内侧 1 px
+            GuiComponent.blit(poseStack, offsetX + FOOTER_W, offsetY + bottom, overW - 1, FOOTER_H,
+                    GUI_WIDTH - 2, TEX_BODY_Y, 1, 1, 256, 256);
+        }
+        // 右边框：取中段样行最右侧 1 px
+        GuiComponent.blit(poseStack, offsetX + GUI_WIDTH - 1, offsetY + bottom, 1, FOOTER_H,
+                GUI_WIDTH - 1, TEX_BODY_Y, 1, 1, 256, 256);
 
         // ⚠️ 列表凹槽必须画在 drawBG（widget 层之前）：
         //    AE2 的 Scrollbar 是在 widget 前景层画滑块的，画在 drawFG 里会把滑块整个盖掉。
