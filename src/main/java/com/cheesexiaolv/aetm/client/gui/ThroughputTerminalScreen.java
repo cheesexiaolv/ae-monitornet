@@ -46,8 +46,8 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     private static final int GUI_WIDTH = 195;
     private static final int HEADER_H = 34;
     private static final int FOOTER_H = 97;
-    /** 底部背包块的宽度：原版几何里底部只到 x=174（滑槽列从列表右侧凸出来）。 */
-    private static final int FOOTER_W = 176;
+    /** 底部背包块的宽度：**与头部/中段同宽 195**（三段式，面板是规整矩形，没有阶梯/悬挑）。 */
+    private static final int FOOTER_W = GUI_WIDTH;
     /**
      * 底部按钮条高度：<b>已经是 0</b>。
      *
@@ -251,18 +251,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
                     0f, TEX_BODY_Y, GUI_WIDTH, 1, 256, 256);
         }
 
-        // 悬挑段补齐（方案 C）：底部块只有 176 宽，右边 x=176..194 这条竖条会露出背后的世界。
-        // 这里用"取中段样行上的 1 个像素、拉伸"的方式把它补成 面板底色 + 右边框：
-        //   1×1 的源像素被拉伸成任意大小 = 纯色填充（不会出现条纹/错位），因此与贴图配色天然一致。
-        int overW = GUI_WIDTH - FOOTER_W;
-        if (overW > 1) {
-            // 主体色：取中段样行、右边界内侧 1 px
-            GuiComponent.blit(poseStack, offsetX + FOOTER_W, offsetY + bottom, overW - 1, FOOTER_H,
-                    GUI_WIDTH - 2, TEX_BODY_Y, 1, 1, 256, 256);
-        }
-        // 右边框：取中段样行最右侧 1 px
-        GuiComponent.blit(poseStack, offsetX + GUI_WIDTH - 1, offsetY + bottom, 1, FOOTER_H,
-                GUI_WIDTH - 1, TEX_BODY_Y, 1, 1, 256, 256);
+        // 三段式：底部块与头部/中段同宽（FOOTER_W == GUI_WIDTH），因此没有悬挑段、也不需要补齐。
 
         // ⚠️ 列表凹槽必须画在 drawBG（widget 层之前）：
         //    AE2 的 Scrollbar 是在 widget 前景层画滑块的，画在 drawFG 里会把滑块整个盖掉。
