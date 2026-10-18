@@ -238,13 +238,13 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         GuiComponent.fill(poseStack, offsetX + FOOTER_W, offsetY + bottom - 1,
                 offsetX + GUI_WIDTH, offsetY + bottom, 0xFF000000);
 
-        // ⚠️ 列表凹槽 + 滚动条轨道必须画在 drawBG（widget 层之前）：
+        // ⚠️ 列表凹槽必须画在 drawBG（widget 层之前）：
         //    AE2 的 Scrollbar 是在 widget 前景层画滑块的，画在 drawFG 里会把滑块整个盖掉。
         //    drawBG 没有 pose 平移，自己加 offsetX/offsetY。
+        //    滚动条那一列（x ≥ 173）的凹槽/滚轮条由贴图绘制，代码不再填色覆盖它。
         poseStack.pushPose();
         poseStack.translate(offsetX, offsetY, 0);
         drawListFrame(poseStack);
-        drawScrollbarTrack(poseStack);
         poseStack.popPose();
     }
 
@@ -420,36 +420,22 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     }
 
     /**
-     * 列表 + 滚动条轨道共用一个"凹槽"（原版 AE 终端就是这样：整块沉下去，上/左暗、下/右亮）。
+     * 列表区域的"凹槽"（上/左暗、下/右亮）。
+     *
+     * <p>⚠️ 凹槽只覆盖列表本身，<b>不含滚动条那一列</b>：右边界是 {@code LIST_X + LIST_W + 1} = 173，
+     * 所以 x ≥ 173 的凹槽/滚轮条全部由 {@code aetm_terminal.png} 绘制，代码不再填色覆盖它
+     * （滑块仍由 AE2 的 {@code Scrollbar} 在 widget 前景层画在原版精灵上，位置 175,35 起）。
      */
     private void drawListFrame(PoseStack poseStack) {
         int x1 = LIST_X - 1;
         int y1 = HEADER_H - 1;
-        int x2 = SCROLLBAR_X - 1 + TRACK_W;
+        int x2 = LIST_X + LIST_W + 1;
         int y2 = HEADER_H + listHeight() + 1;
         GuiComponent.fill(poseStack, x1, y1, x2, y2, COL_LIST_BG);
         GuiComponent.fill(poseStack, x1, y1, x2, y1 + 1, COL_LIST_DARK);       // 上沿
         GuiComponent.fill(poseStack, x1, y1, x1 + 1, y2, COL_LIST_DARK);       // 左沿
         GuiComponent.fill(poseStack, x1, y2 - 1, x2, y2, COL_TRACK_LIGHT);     // 下沿（亮）
         GuiComponent.fill(poseStack, x2 - 1, y1, x2, y2, COL_TRACK_LIGHT);     // 右沿（亮）
-    }
-
-    /**
-     * 滚动条轨道：AE2 的 Scrollbar 只画滑块，轨道要自己画（官方终端是烘在贴图里的）。
-     * 轨道只画上/左两条暗沿，右/下交给外层凹槽的亮沿。
-     *
-     * <p>⚠️ 由 {@link #drawBG} 调用（widget 层之前）——画在 drawFG 里会把滑块盖掉。
-     */
-    private void drawScrollbarTrack(PoseStack poseStack) {
-        int x = SCROLLBAR_X - 1;
-        int y = HEADER_H - 1;
-        int w = TRACK_W;
-        int h = listHeight() + 2;
-        GuiComponent.fill(poseStack, x, y, x + w, y + h, COL_TRACK_BODY);
-        GuiComponent.fill(poseStack, x, y, x + w, y + 1, COL_LIST_DARK);
-        GuiComponent.fill(poseStack, x, y, x + 1, y + h, COL_LIST_DARK);
-        // 轨道与列表之间补一条亮线，形成两根并列的凹槽
-        GuiComponent.fill(poseStack, x - 1, y, x, y + h, COL_TRACK_LIGHT);
     }
 
     /** 行的悬停提示：名称 / 存量 / 速率 / 各来源监控器。 */
