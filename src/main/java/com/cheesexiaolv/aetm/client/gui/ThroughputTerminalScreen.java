@@ -63,13 +63,13 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     private static final int TEX_FOOTER_Y = 51;
     /** 头部块里一条"纯主体 + 左右边框"的横带（用来平铺补出面板中段）。 */
     /**
-     * 中段平铺横带的取样起点（贴图 y）。
+     * 中段取样行（贴图 y）。**只取这 1 行**，竖向拉伸到列表底部（不再平铺）。
      *
-     * <p><b>取样区 = x 0…194，y 34…50（共 17 行，{@link #TEX_BODY_H}）</b>，紧贴头部块下沿（y ≤ 33）、
-     * 在底部块上沿（y = 51）之前。这一带会被<b>竖向重复</b>铺满整个列表高度，所以里面的内容必须
-     * "首尾自接、纵向无端"（左右边框、滚动条凹槽竖条；不要有横线/端盖/文字）。
+     * <p>所以这一行必须是一条完整的"横截面"：x 0…194 的左右边框、面板底色、滚动条凹槽的左右边
+     * （x 173…188）。上下收口属于头部块（y ≤ 33）与底部块（y ≥ 51），不要画在这一行里。
      */
     private static final int TEX_BODY_Y = 34;
+    /** 旧版"平铺 17 行"用的高度，现已不使用（保留常量避免误改别处引用）。 */
     private static final int TEX_BODY_H = 17;
 
     // ---- 阶梯收口补丁（悬挑段底部那 19×3 像素）----
@@ -242,12 +242,13 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         // ⚠️ 底部背包块只有 176 宽（原版几何：头部/列表 195 宽，底部到 x=175，滑槽列从列表右侧凸出来）
         blit(poseStack, offsetX, offsetY + bottom, 0, TEX_FOOTER_Y, FOOTER_W, FOOTER_H);
 
-        // 面板中段：用头部块里的一条"纯主体 + 左右边框"横带平铺，保证左右边框连续
-        int y = HEADER_H;
-        while (y < bottom) {
-            int h = Math.min(TEX_BODY_H, bottom - y);
-            blit(poseStack, offsetX, offsetY + y, 0, TEX_BODY_Y, GUI_WIDTH, h);
-            y += h;
+        // 面板中段：**只取贴图的 1 行（y = TEX_BODY_Y），竖向拉伸填满**，不再平铺。
+        // 平铺会把"槽的收口/横线"每 17 px 重复一次（表现为一串方块）；拉伸只采一行像素，
+        // 所以贴图里中段只需要提供"一条横截面"：x 0..194 的边框 + 槽的左右边，纵向一律不体现。
+        int bodyH = bottom - HEADER_H;
+        if (bodyH > 0) {
+            GuiComponent.blit(poseStack, offsetX, offsetY + HEADER_H, GUI_WIDTH, bodyH,
+                    0f, TEX_BODY_Y, GUI_WIDTH, 1, 256, 256);
         }
 
         // 悬挑段（滑槽列右边那截，x=176..194）在阶梯处收口：
