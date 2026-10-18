@@ -62,7 +62,14 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     /** 贴图里底部块的 y（紧跟在头部块下面）。 */
     private static final int TEX_FOOTER_Y = 51;
     /** 头部块里一条"纯主体 + 左右边框"的横带（用来平铺补出面板中段）。 */
-    private static final int TEX_BODY_Y = 20;
+    /**
+     * 中段平铺横带的取样起点（贴图 y）。
+     *
+     * <p><b>取样区 = x 0…194，y 34…50（共 17 行，{@link #TEX_BODY_H}）</b>，紧贴头部块下沿（y ≤ 33）、
+     * 在底部块上沿（y = 51）之前。这一带会被<b>竖向重复</b>铺满整个列表高度，所以里面的内容必须
+     * "首尾自接、纵向无端"（左右边框、滚动条凹槽竖条；不要有横线/端盖/文字）。
+     */
+    private static final int TEX_BODY_Y = 34;
     private static final int TEX_BODY_H = 17;
 
     // ---- 阶梯收口补丁（悬挑段底部那 19×3 像素）----
