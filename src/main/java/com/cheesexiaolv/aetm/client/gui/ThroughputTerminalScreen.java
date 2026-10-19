@@ -46,8 +46,6 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     private static final int GUI_WIDTH = 195;
     private static final int HEADER_H = 34;
     private static final int FOOTER_H = 97;
-    /** 底部背包块的宽度：**与头部/中段同宽 195**（三段式，面板是规整矩形，没有阶梯/悬挑）。 */
-    private static final int FOOTER_W = GUI_WIDTH;
     /**
      * 底部按钮条高度：<b>已经是 0</b>。
      *
@@ -59,46 +57,29 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
 
     /** 贴图里头部块的 y。 */
     private static final int TEX_HEADER_Y = 0;
-    /** 贴图里底部块的 y（紧跟在头部块下面）。 */
-    private static final int TEX_FOOTER_Y = 51;
-    /** 头部块里一条"纯主体 + 左右边框"的横带（用来平铺补出面板中段）。 */
-    /**
-     * 中段取样行（贴图 y）。**只取这 1 行**，竖向拉伸到列表底部（不再平铺）。
-     *
-     * <p>所以这一行必须是一条完整的"横截面"：x 0…194 的左右边框、面板底色、滚动条凹槽的左右边
-     * （x 173…188）。上下收口属于头部块（y ≤ 33）与底部块（y ≥ 51），不要画在这一行里。
-     */
-    private static final int TEX_BODY_Y = 36;
-    /** 旧版"平铺 17 行"用的高度，现已不使用（保留常量避免误改别处引用）。 */
-    private static final int TEX_BODY_H = 17;
-
-    // ---- 阶梯收口补丁（悬挑段底部那 19×3 像素）----
-    /**
-     * 贴图里收口补丁的位置：**右上角空闲区 (195,0)…(213,2)**。
-     *
-     * <p>补丁宽度 = {@code GUI_WIDTH - FOOTER_W} = 19（自动算，别改），高度 = {@link #STEP_H}。
-     * 想改成 4 行收口：把 {@code STEP_H} 改 4，并在贴图里往下多画一行（补丁区高 4）。
-     */
-    private static final int TEX_STEP_X = 195;
-    private static final int TEX_STEP_Y = 0;
-    /** 收口高度（行数）。 */
-    private static final int STEP_H = 3;
-
+    /** 列表第一行切片 y（18 行）。 */
+    private static final int TEX_FIRST_ROW_Y = 35;
+    /** 列表中间行切片 y（18 行，每个可见行重复贴一次）。 */
+    private static final int TEX_ROW_Y = 53;
+    /** 列表最后一行切片 y（18 行）。 */
+    private static final int TEX_LAST_ROW_Y = 71;
+    /** 贴图里底部块的 y（背包区，195 宽 × 97 行）。 */
+    private static final int TEX_FOOTER_Y = 88;
     private static final int LIST_X = 8;
-    /** 列表宽度：右边界 172，滚动条轨道在 174..187（JSON 里 left=175）。 */
+    /** 列表宽度：右边界 172（滚动条列 x 173…188，滑块位置由样式 JSON 的 widgets.scrollbar 给）。 */
     private static final int LIST_W = 164;
-    private static final int SCROLLBAR_X = 175;
-    private static final int TRACK_W = 14;
 
-    // ---- 行内列位置（面板相对）----
-    private static final int ICON_X = LIST_X + 2;
-    private static final int NAME_X = LIST_X + 20;
-    /** 名称列可用宽度（超出截断加省略号）。 */
-    private static final int NAME_W = 54;
-    /** 存量列右边界。 */
-    private static final int AMOUNT_RIGHT = 126;
-    /** 速率列右边界（列表内右边缘）。 */
-    private static final int RATE_RIGHT = LIST_X + LIST_W - 1;
+    // ---- 行内列位置（面板相对）：**只显示图标 + 存量 + 速率**，名称改到悬停提示里 ----
+    /** 图标左边缘。 */
+    private static final int ICON_X = 8;
+    /** 存量列右边界（整体左移 4：112 → 108）。 */
+    private static final int AMOUNT_RIGHT = 108;
+    /** 速率列右边界（整体左移 4：170 → 166）。 */
+    private static final int RATE_RIGHT = LIST_X + LIST_W - 6;
+
+    // ---- 行高亮/悬停的绘制区域（**x = 7…168，高 18**，与贴图的列表内框对齐）----
+    private static final int ROW_X = 7;
+    private static final int ROW_W = 162;
 
     // ---- 头部第二行的全局速率单位按钮（底部条已删除）----
     /** 头部第二行的 y：标题在 y=6，这一行占 18..31，仍在 HEADER_H=34 之内（y=32/33 是头部块下沿）。 */
@@ -109,18 +90,12 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     /** 双击列表行的判定窗口（毫秒）。 */
     private static final long DOUBLE_CLICK_MS = 250L;
 
-    private static final int COL_TRACK_BODY = 0xFF8B8B8B;
-    private static final int COL_TRACK_DARK = 0xFF373737;
-    private static final int COL_TRACK_LIGHT = 0xFFFFFFFF;
     private static final int COL_TEXT = 0xFF3C3C3C;
     private static final int COL_TEXT_DIM = 0xFF7A7A7A;
     private static final int COL_POS = 0xFF1B7A1B;
     private static final int COL_NEG = 0xFFA02828;
     private static final int COL_SELECT = 0x66A8C8FF;
     private static final int COL_HOVER = 0x33FFFFFF;
-    private static final int COL_SEP = 0xFFB4B4B4;
-    private static final int COL_LIST_BG = 0xFFE0E0E0;
-    private static final int COL_LIST_DARK = 0xFF373737;
 
     private Scrollbar scrollbar;
 
@@ -236,31 +211,30 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         super.drawBG(poseStack, offsetX, offsetY, mouseX, mouseY, partialTicks);
 
         this.bindTexture("guis/aetm_terminal.png");
-        blit(poseStack, offsetX, offsetY, 0, TEX_HEADER_Y, GUI_WIDTH, HEADER_H);
-        // 列表下沿 = 底部块的上沿：STRIP_H 现在是 0（底部条已删），所以就是 头部 + 列表
-        int bottom = HEADER_H + listHeight() + STRIP_H;
-        // ⚠️ 底部背包块只有 176 宽（原版几何：头部/列表 195 宽，底部到 x=175，滑槽列从列表右侧凸出来）
-        blit(poseStack, offsetX, offsetY + bottom, 0, TEX_FOOTER_Y, FOOTER_W, FOOTER_H);
 
-        // 面板中段：**只取贴图的 1 行（y = TEX_BODY_Y），竖向拉伸填满**，不再平铺。
-        // 平铺会把"槽的收口/横线"每 17 px 重复一次（表现为一串方块）；拉伸只采一行像素，
-        // 所以贴图里中段只需要提供"一条横截面"：x 0..194 的边框 + 槽的左右边，纵向一律不体现。
-        int bodyH = bottom - HEADER_H;
-        if (bodyH > 0) {
-            GuiComponent.blit(poseStack, offsetX, offsetY + HEADER_H, GUI_WIDTH, bodyH,
-                    0f, TEX_BODY_Y, GUI_WIDTH, 1, 256, 256);
+        // ===== 原版 AE2 终端的 5 段切片（全部 195 宽，同一张贴图）=====
+        //   header   固定顶部
+        //   firstRow 列表第一行 / row 中间行（每个可见行贴一次）/ lastRow 列表最后一行
+        //   bottom   底部背包区（195 宽，右侧那 19px 就是滑槽列的下半截）
+        // 不再有任何拉伸/平铺/收口补丁：每一段都是 1:1 原样贴，行数变化只是 row 段多贴几次。
+        blit(poseStack, offsetX, offsetY, 0, TEX_HEADER_Y, GUI_WIDTH, HEADER_H);
+
+        int rows = this.visibleRows;
+        for (int i = 0; i < rows; i++) {
+            int y = HEADER_H + i * ROW_H;
+            int srcY;
+            if (i == 0) {
+                srcY = TEX_FIRST_ROW_Y;
+            } else if (i == rows - 1) {
+                srcY = TEX_LAST_ROW_Y;
+            } else {
+                srcY = TEX_ROW_Y;
+            }
+            blit(poseStack, offsetX, offsetY + y, 0, srcY, GUI_WIDTH, ROW_H);
         }
 
-        // 三段式：底部块与头部/中段同宽（FOOTER_W == GUI_WIDTH），因此没有悬挑段、也不需要补齐。
-
-        // ⚠️ 列表凹槽必须画在 drawBG（widget 层之前）：
-        //    AE2 的 Scrollbar 是在 widget 前景层画滑块的，画在 drawFG 里会把滑块整个盖掉。
-        //    drawBG 没有 pose 平移，自己加 offsetX/offsetY。
-        //    滚动条那一列（x ≥ 173）的凹槽/滚轮条由贴图绘制，代码不再填色覆盖它。
-        poseStack.pushPose();
-        poseStack.translate(offsetX, offsetY, 0);
-        drawListFrame(poseStack);
-        poseStack.popPose();
+        int bottom = HEADER_H + listHeight() + STRIP_H;
+        blit(poseStack, offsetX, offsetY + bottom, 0, TEX_FOOTER_Y, GUI_WIDTH, FOOTER_H);
     }
 
     // ------------------------------------------------------------------
@@ -374,9 +348,9 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
                 var row = rows.get(index);
 
                 if (index == this.menu.selectedRow) {
-                    GuiComponent.fill(poseStack, LIST_X, rowTop, LIST_X + LIST_W, rowTop + ROW_H, COL_SELECT);
+                    GuiComponent.fill(poseStack, ROW_X, rowTop, ROW_X + ROW_W, rowTop + ROW_H, COL_SELECT);
                 } else if (index == hovered) {
-                    GuiComponent.fill(poseStack, LIST_X, rowTop, LIST_X + LIST_W, rowTop + ROW_H, COL_HOVER);
+                    GuiComponent.fill(poseStack, ROW_X, rowTop, ROW_X + ROW_W, rowTop + ROW_H, COL_HOVER);
                 }
 
                 drawRowContent(poseStack, row, rowTop);
@@ -386,10 +360,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
                 }
             }
 
-            // 每行下沿的分隔线：每个可见行位都画（空行也算一行，列表底部才不空落落）。
-            // 最后一行那条停在凹槽亮边之上 1px，别把凹槽的亮下沿盖掉。
-            int sepY = Math.min(rowTop + ROW_H, HEADER_H + listHeight() - 1);
-            GuiComponent.fill(poseStack, LIST_X + 1, sepY - 1, LIST_X + LIST_W - 1, sepY, COL_SEP);
+            // 行分隔线由贴图绘制（代码不再画）。
         }
 
         // 列表行 tooltip：鼠标落在任一已打开的子窗口上时不画 ——
@@ -418,13 +389,6 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
                     ICON_X, rowTop + 1, getBlitOffset(), row.key());
         }
 
-        String name = row.key().getDisplayName().getString();
-        String clipped = this.font.plainSubstrByWidth(name, NAME_W - 6);
-        if (!clipped.equals(name)) {
-            clipped = clipped + "…";
-        }
-        this.font.draw(poseStack, clipped, NAME_X, rowTop + 5, row.hasHistory() ? COL_TEXT : COL_TEXT_DIM);
-
         String amount = amountText(row);
         this.font.draw(poseStack, amount, AMOUNT_RIGHT - this.font.width(amount), rowTop + 5, COL_TEXT);
 
@@ -432,25 +396,6 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         double perRoutine = row.ratePerTick() * TerminalSettings.routineTicks(row.routineOrdinal());
         int rateColor = perRoutine > 0 ? COL_POS : perRoutine < 0 ? COL_NEG : COL_TEXT_DIM;
         this.font.draw(poseStack, rate, RATE_RIGHT - this.font.width(rate), rowTop + 5, rateColor);
-    }
-
-    /**
-     * 列表区域的"凹槽"（上/左暗、下/右亮）。
-     *
-     * <p>⚠️ 凹槽只覆盖列表本身，<b>不含滚动条那一列</b>：右边界是 {@code LIST_X + LIST_W + 1} = 173，
-     * 所以 x ≥ 173 的凹槽/滚轮条全部由 {@code aetm_terminal.png} 绘制，代码不再填色覆盖它
-     * （滑块仍由 AE2 的 {@code Scrollbar} 在 widget 前景层画在原版精灵上，位置 175,35 起）。
-     */
-    private void drawListFrame(PoseStack poseStack) {
-        int x1 = LIST_X - 1;
-        int y1 = HEADER_H - 1;
-        int x2 = LIST_X + LIST_W + 1;
-        int y2 = HEADER_H + listHeight() + 1;
-        GuiComponent.fill(poseStack, x1, y1, x2, y2, COL_LIST_BG);
-        GuiComponent.fill(poseStack, x1, y1, x2, y1 + 1, COL_LIST_DARK);       // 上沿
-        GuiComponent.fill(poseStack, x1, y1, x1 + 1, y2, COL_LIST_DARK);       // 左沿
-        GuiComponent.fill(poseStack, x1, y2 - 1, x2, y2, COL_TRACK_LIGHT);     // 下沿（亮）
-        GuiComponent.fill(poseStack, x2 - 1, y1, x2, y2, COL_TRACK_LIGHT);     // 右沿（亮）
     }
 
     /** 行的悬停提示：名称 / 存量 / 速率 / 各来源监控器。 */

@@ -10,12 +10,15 @@ import javax.annotation.Nullable;
 import com.cheesexiaolv.aetm.Logic.TerminalSettings;
 import com.cheesexiaolv.aetm.Logic.ThroughputHistory;
 import com.cheesexiaolv.aetm.network.TerminalRow;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 import appeng.api.client.AEStackRendering;
 
@@ -44,6 +47,10 @@ public class TerminalWindow {
 
     /** 标题栏高度。 */
     private static final int TITLE_H = 14;
+    /** 标题栏**文字**的 y（窗口相对）—— 想让标题文字下移就改它。 */
+    private static final int TITLE_TEXT_Y = 5;
+    /** 标题栏**按钮**（量/流/单位/×）的 y（窗口相对）—— 想让按钮下移就改它。 */
+    private static final int TITLE_BTN_Y = 4;
     /** 标题栏长按钮（量 / 窗 / 位 / 曲线）：25×12 —— 刚好放得下两个汉字。 */
     private static final int WIDE_BTN_W = 25;
     private static final int WIDE_BTN_H = 12;
@@ -60,8 +67,12 @@ public class TerminalWindow {
     /** 显示槽行的 x 起点（让开「定位」按钮）与文字起点。 */
     private static final int SLOT_ROW_X = 38;
     private static final int SLOT_TEXT_X = 60;
-    /** 显示槽行高度。 */
-    private static final int SLOT_ROW_H = 20;
+    /** 显示槽行**高度（唯一真源）**：槽框 = 它 - 2，槽行 x 外的所有纵向位置都由它推导。 */
+    private static final int SLOT_ROW_H = SLOT_SIZE + 2;
+    /** 显示槽行**顶部 y**（标题栏下沿 +3）：槽、定位按钮、命中框、曲线区都以它为基准。 */
+    private static final int SLOT_ROW_Y = TITLE_H + 3;
+    /** 「定位」按钮 y：在槽行内**垂直居中**，因此跟随 {@link #SLOT_ROW_H} 一起移动。 */
+    private static final int LOCATE_BTN_Y = SLOT_ROW_Y + (SLOT_ROW_H - WIDE_BTN_H) / 2 + 2;
     /** 图表区尺寸。 */
     private static final int CHART_W = 160;
     private static final int CHART_H = 64;
@@ -70,17 +81,11 @@ public class TerminalWindow {
     private static final int DRAG_KEEP_W = 24;
     private static final int DRAG_KEEP_H = 16;
 
-    // ---- AE 调色板（只用 GuiComponent.fill，不新增贴图/颜色）----
-    /** 外描边。 */
-    private static final int COL_OUTLINE = 0xFF000000;
+    // ---- AE 调色板（面板底/标题栏/槽框已改由贴图 aetm_window.png 绘制，这里只剩按钮与文字用的颜色）----
     /** 内上/左亮边（按钮的亮边也用它）。 */
     private static final int COL_HILIGHT = 0xFFFFFFFF;
     /** 内下/右暗边（按钮的暗边也用它）。 */
     private static final int COL_SHADOW = 0xFF555555;
-    /** 面板主体。 */
-    private static final int COL_BODY = 0xFFC6C6C6;
-    /** 标题栏底部 1px 分隔线。 */
-    private static final int COL_TITLE_SEP = 0xFF8B8B8B;
     /** 标题文字 / 按钮字符。 */
     private static final int COL_TITLE = 0xFF404040;
     /** 按钮禁用时的字符色（例如没有来源可定位）。 */
@@ -100,10 +105,6 @@ public class TerminalWindow {
     /** 速率正负色。 */
     private static final int COL_POS = 0xFF1B7A1B;
     private static final int COL_NEG = 0xFFA02828;
-    /** 凹槽：上/左暗、主体、下/右亮。 */
-    private static final int COL_SLOT_DARK = 0xFF373737;
-    private static final int COL_SLOT_BODY = 0xFF8B8B8B;
-    private static final int COL_SLOT_LIGHT = 0xFFFFFFFF;
     /** 无数据提示的底色（与折线图内部一致）。 */
     private static final int COL_HINT_BG = 0xFF0C0C0C;
 
@@ -197,16 +198,10 @@ public class TerminalWindow {
         int w = WIDTH;
         int h = HEIGHT;
 
-        // 面板：外描边 1px → 内上/左亮 2px → 内下/右暗 2px → 主体
-        GuiComponent.fill(poseStack, x, y, x + w, y + h, COL_OUTLINE);
-        GuiComponent.fill(poseStack, x + 1, y + 1, x + w - 1, y + h - 1, COL_HILIGHT);
-        GuiComponent.fill(poseStack, x + 1, y + 1, x + w - 3, y + h - 3, COL_BODY);
-        GuiComponent.fill(poseStack, x + w - 3, y + 3, x + w - 1, y + h - 1, COL_SHADOW);
-        GuiComponent.fill(poseStack, x + 3, y + h - 3, x + w - 1, y + h - 1, COL_SHADOW);
-
-        // 标题栏：主体色 + 底部 1px 分隔线
-        GuiComponent.fill(poseStack, x + 1, y + 1, x + w - 1, y + TITLE_H, COL_BODY);
-        GuiComponent.fill(poseStack, x + 1, y + TITLE_H - 1, x + w - 1, y + TITLE_H, COL_TITLE_SEP);
+        // 面板底图：来自贴图 guis/aetm_window.png（画布 256×256，图案在左上角 180×112，1:1 贴）
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, new ResourceLocation("ae2", "textures/guis/aetm_window.png"));
+        GuiComponent.blit(poseStack, x, y, 0, 0, w, h, 256, 256);
 
         TerminalRow row = rowOf(screen);
 
@@ -215,7 +210,7 @@ public class TerminalWindow {
         if (!clipped.equals(this.title)) {
             clipped = clipped + "…";
         }
-        font.draw(poseStack, clipped, x + 5, y + 3, COL_TITLE);
+        font.draw(poseStack, clipped, x + 5, y + TITLE_TEXT_Y, COL_TITLE);
 
         drawSlotRow(poseStack, font, screen, row);
 
@@ -225,7 +220,7 @@ public class TerminalWindow {
         // ⚠️ 按钮最后画（压在标题栏与槽行之上），而字符又是按钮里最后画的 —— 否则会被底/描边盖住
         drawButtons(poseStack, font, mouseX, mouseY, row);
         // 「定位」按钮跟着槽行，也在这里补画（同样晚于面板/槽位）
-        drawButton(poseStack, font, this.locateButton, x + 4, y + TITLE_H + 1, mouseX, mouseY, row,
+        drawButton(poseStack, font, this.locateButton, x + 4, y + LOCATE_BTN_Y, mouseX, mouseY, row,
                 hasLocateTarget(row));
     }
 
@@ -239,7 +234,7 @@ public class TerminalWindow {
             if (!button.visible(row)) {
                 continue;
             }
-            drawButton(poseStack, font, button, buttonX(i), y + 1, mouseX, mouseY, row, true);
+            drawButton(poseStack, font, button, buttonX(i), y + TITLE_BTN_Y, mouseX, mouseY, row, true);
         }
     }
 
@@ -285,24 +280,23 @@ public class TerminalWindow {
     private void drawSlotRow(PoseStack poseStack, Font font, ThroughputTerminalScreen<?> screen,
             @Nullable TerminalRow row) {
         int slotX = x + SLOT_ROW_X;
-        int slotY = y + TITLE_H + 1;
+        int slotY = y + SLOT_ROW_Y;
 
-        GuiComponent.fill(poseStack, slotX, slotY, slotX + SLOT_SIZE, slotY + SLOT_SIZE, COL_SLOT_LIGHT);
-        GuiComponent.fill(poseStack, slotX, slotY, slotX + SLOT_SIZE - 2, slotY + SLOT_SIZE - 2, COL_SLOT_BODY);
-        GuiComponent.fill(poseStack, slotX, slotY, slotX + SLOT_SIZE - 2, slotY + 1, COL_SLOT_DARK);
-        GuiComponent.fill(poseStack, slotX, slotY, slotX + 1, slotY + SLOT_SIZE - 2, COL_SLOT_DARK);
+        // 槽框（外亮边 / 底色 / 上左暗沿）已删除：这一块由贴图 aetm_window.png 绘制，
+        // 代码只把物品图标画在槽内（下面 drawInGui），不再画任何底/边。
 
         int textX = x + SLOT_TEXT_X;
         int textRight = x + WIDTH - 5;
         if (row == null) {
             font.draw(poseStack, Component.translatable("gui.aetm.window.no_history"),
-                    textX, slotY + 5, COL_TEXT_DIM);
+                    textX, slotY + 7, COL_TEXT_DIM);
             return;
         }
 
         // 图标：只有该 key 类型注册了渲染处理器才画（判断方式与列表行一致）
         if (AEStackRendering.get(row.key().getType()) != null) {
-            AEStackRendering.drawInGui(Minecraft.getInstance(), poseStack, slotX + 1, slotY + 1,
+            // 图标在槽内的偏移：x 留 1px，y 下移 4px（与贴图里的槽框对齐；曾偏上 3px）
+            AEStackRendering.drawInGui(Minecraft.getInstance(), poseStack, slotX + 1, slotY + 4,
                     screen.getBlitOffset(), row.key());
         }
 
@@ -311,15 +305,15 @@ public class TerminalWindow {
         if (!clipped.equals(name)) {
             clipped = clipped + "…";
         }
-        font.draw(poseStack, clipped, textX, slotY + 1, row.hasHistory() ? COL_TEXT : COL_TEXT_DIM);
+        font.draw(poseStack, clipped, textX, slotY + 3, row.hasHistory() ? COL_TEXT : COL_TEXT_DIM);
 
         String amount = ThroughputTerminalScreen.amountText(row);
-        font.draw(poseStack, amount, textRight - font.width(amount), slotY + 11, COL_TEXT);
+        font.draw(poseStack, amount, textRight - font.width(amount), slotY + 13, COL_TEXT);
 
         String rate = ThroughputTerminalScreen.rowRateText(row);
         double perRoutine = row.ratePerTick() * TerminalSettings.routineTicks(row.routineOrdinal());
         int rateColor = perRoutine > 0 ? COL_POS : perRoutine < 0 ? COL_NEG : COL_TEXT_DIM;
-        font.draw(poseStack, rate, textX, slotY + 11, rateColor);
+        font.draw(poseStack, rate, textX, slotY + 13, rateColor);
     }
 
     /**
@@ -331,7 +325,7 @@ public class TerminalWindow {
     private void drawChart(PoseStack poseStack, Font font, ThroughputTerminalScreen<?> screen,
             @Nullable TerminalRow row) {
         int chartX = x + 10;
-        int chartY = y + TITLE_H + SLOT_ROW_H;
+        int chartY = y + SLOT_ROW_Y + SLOT_ROW_H + 4;
         if (chartY + CHART_H > y + HEIGHT) {
             return;
         }
@@ -375,7 +369,7 @@ public class TerminalWindow {
         TerminalRow row = rowOf(screen);
 
         // 「定位」（槽行左侧）：没有来源时置灰，点了也不做事
-        if (isInside(mx, my, x + 4, y + TITLE_H + 1, LOCATE_BTN_W, WIDE_BTN_H)) {
+        if (isInside(mx, my, x + 4, y + LOCATE_BTN_Y, LOCATE_BTN_W, WIDE_BTN_H)) {
             if (hasLocateTarget(row)) {
                 this.locateButton.action().accept(screen, this);
             }
@@ -449,7 +443,7 @@ public class TerminalWindow {
     public Component hintAt(double mouseX, double mouseY, ThroughputTerminalScreen<?> screen) {
         TerminalRow row = rowOf(screen);
         if (hasLocateTarget(row)
-                && isInside(mouseX, mouseY, x + 4, y + TITLE_H + 1, LOCATE_BTN_W, WIDE_BTN_H)) {
+                && isInside(mouseX, mouseY, x + 4, y + LOCATE_BTN_Y, LOCATE_BTN_W, WIDE_BTN_H)) {
             return this.locateButton.hint();
         }
         WindowButton button = buttonAt(mouseX, mouseY, row);
@@ -507,7 +501,7 @@ public class TerminalWindow {
 
     /** 鼠标是否落在显示槽上（槽位区域不触发拖动）。 */
     private boolean isOverSlot(double mx, double my) {
-        return isInside(mx, my, x + SLOT_ROW_X, y + TITLE_H + 1, SLOT_SIZE, SLOT_SIZE);
+        return isInside(mx, my, x + SLOT_ROW_X, y + SLOT_ROW_Y, SLOT_SIZE, SLOT_SIZE);
     }
 
     /** 第 i 个标题栏按钮的 x（面板相对）：从右往左排，最后一个贴着右内边距。 */
