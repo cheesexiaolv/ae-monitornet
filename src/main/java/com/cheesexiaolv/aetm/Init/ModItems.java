@@ -100,15 +100,30 @@ public class ModItems {
                     ));
 
     // 5. 无线存储监控终端：与有线版共用菜单/界面，靠 AE2 的无线终端机制链接与耗电。
-    //    TODO(stage 2): 1.20.1 的 AE2WTLib（WUT / 通用终端）集成待补 —— 1.19.2 里这里会在装了
-    //    ae2wtlib 时换用 UniversalThroughputTerminalItem（实现 IUniversalWirelessTerminalItem）。
-    //    本机没有 1.20.1 的 AE2WTLib jar，xmod/ae2wtlib 整个包已在第一阶段删除，
-    //    所以这里只保留不依赖它的基类；老存档里的同 id 物品不受影响（id 没变）。
+    //    装了 AE2WTLib 时换用它的子类（实现 IUniversalWirelessTerminalItem），这样同一个物品
+    //    既能当普通无线终端用（安全终端链接 + WAP 范围），也能在「通用终端 / WUT」里被切换到。
+    //    ⚠️ 子类只在装了 ae2wtlib 时才会被类加载：判断写在 createWirelessTerminal() 里，
+    //       没装时那个类名永远不会被 JVM 解析（软依赖不能硬 import）——与 1.19.2 同一套隔离方式。
     public static final RegistryObject<Item> WIRELESS_THROUGHPUT_TERMINAL =
             ITEMS.register("wireless_throughput_terminal", ModItems::createWirelessTerminal);
 
+    /** AE2WTLib 的 modid（软依赖）。 */
+    private static final String AE2WTLIB_MODID = "ae2wtlib";
+
+    /**
+     * 无线终端物品的工厂：装了 AE2WTLib 就用它的通用终端子类，否则用不依赖它的基类。
+     *
+     * <p>两条路都注册在同一个 id {@code aetm:wireless_throughput_terminal} 上，
+     * 所以既有配方、既有存档里的物品都不受影响（换环境只是换了个行为更全的子类）。
+     */
     private static Item createWirelessTerminal() {
-        return new WirelessThroughputTerminalItem(new Item.Properties().stacksTo(1));
+        Item.Properties properties = new Item.Properties().stacksTo(1);
+        var modList = ModList.get();
+        if (modList != null && modList.isLoaded(AE2WTLIB_MODID)) {
+            // 全限定名 = 不 import，避免没装 AE2WTLib 的整合包在类加载期解析 de.mari_023.* 而崩
+            return new com.cheesexiaolv.aetm.xmod.ae2wtlib.UniversalThroughputTerminalItem(properties);
+        }
+        return new WirelessThroughputTerminalItem(properties);
     }
 
     public static void register(IEventBus eventBus) {

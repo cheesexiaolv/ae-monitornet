@@ -78,10 +78,27 @@ dependencies {
     runtimeOnly fg.deobf("blank:appliedenergistics2-forge:${ae2_version}")
     runtimeOnly fg.deobf("blank:guideme:20.1.14")
 
-    // Removed for 1.20.1 (stage 1), see docs/port-1.20.1.md:
-    //   - ae2wtlib / architectury / cloth-config / curios  -> xmod.ae2wtlib package deleted
-    //   - jade / jei                                       -> no 1.20.1 jars available locally
-    // TODO(stage 2): re-add AE2WTLib (WUT integration), JEI and Jade for 1.20.1 once jars exist.
+    // Removed for 1.20.1 (stage 1), re-added in stage 2 -- see docs/port-1.20.1.md:
+    //  - JEI / Jade: this mod has no plugin classes of its own; the integration is AE2's own
+    //    JEI/Jade plugin plus the Igtooltip providers kept in client/{ClientTooltipFixer,
+    //    MonitorTooltipLockFix}. They are still compile+runtime deps so that the dev client
+    //    actually loads them (and so a future plugin class would compile against the same jar
+    //    the players run).
+    //  - AE2WTLib (WUT / universal terminal): mandatory dependencies of its mods.toml are
+    //    ae2 [15.4.10,16), cloth_config, architectury and curios -> all four are supplied as
+    //    runtimeOnly from libs/ so `runClient` can be exercised against the real thing.
+    compileOnly fg.deobf("blank:${jei_artifact}:${jei_version}")
+    runtimeOnly fg.deobf("blank:${jei_artifact}:${jei_version}")
+    compileOnly fg.deobf("blank:${jade_artifact}:${jade_version}")
+    runtimeOnly fg.deobf("blank:${jade_artifact}:${jade_version}")
+
+    compileOnly fg.deobf("blank:ae2wtlib:${ae2wtlib_version}")
+    runtimeOnly fg.deobf("blank:ae2wtlib:${ae2wtlib_version}")
+    // AE2WTLib's mandatory prerequisites (its META-INF/mods.toml):
+    //   ae2 [15.4.10,16)  /  cloth_config  /  architectury  /  curios
+    runtimeOnly fg.deobf("blank:architectury:${architectury_version}")
+    runtimeOnly fg.deobf("blank:cloth-config:${clothconfig_version}")
+    runtimeOnly fg.deobf("blank:curios-forge:${curios_version}")
 }
 
 

@@ -75,7 +75,14 @@ versionRange="[15.4.10,16)"
 ordering="AFTER"
 side="BOTH"
 
-# TODO(stage 2): AE2WTLib（WUT / 通用终端）集成待补。
-# 1.19.2 有一整段 [[dependencies]] 声明 ae2wtlib 为软依赖，并由 xmod/ae2wtlib 包实现
-# 「同一个无线终端既能当普通无线终端、也能在通用终端里切换」。1.20.1 第一阶段因为本机没有
-# 该版本的 jar，整个包与这里的依赖段一并删除（见 docs/port-1.20.1.md）。
+# AE2WTLib：无线存储监控终端可以注册进它的「通用终端 / WUT」，在通用终端里切换到本终端。
+# 软依赖（mandatory=false）：没装时注册的是不依赖它的基类物品，xmod 包里那些 de.mari_023.* 类
+# 一个都不会被加载（入口是 xmod/ae2wtlib/AE2WtLibPlugin 的 ModList 守卫）。
+# 15.3.3 是 AE2 15.x / MC 1.20.1 线，对 ae2 要求 [15.4.10,16)；它的 mandatory 前置是
+# cloth_config / architectury / curios，由整合包（或开发环境的 libs/）提供。
+[[dependencies.${mod_id}]]
+modId="ae2wtlib"
+mandatory=false
+versionRange="[15.3.3,)"
+ordering="AFTER"
+side="BOTH"
