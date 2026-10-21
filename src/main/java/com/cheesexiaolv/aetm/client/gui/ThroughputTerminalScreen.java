@@ -82,7 +82,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
      * {@code GuiGraphics#blit} 必须显式给贴图，所以改成常量。路径与 1.19.2 完全一致。
      */
     private static final ResourceLocation TEX_TERMINAL =
-            new ResourceLocation("ae2", "textures/guis/aetm_terminal.png");
+            ResourceLocation.fromNamespaceAndPath("ae2", "textures/guis/aetm_terminal.png");
 
     // ---- 行内列位置（面板相对）：**只显示图标 + 存量 + 速率**，名称改到悬停提示里 ----
     /** 图标左边缘。 */

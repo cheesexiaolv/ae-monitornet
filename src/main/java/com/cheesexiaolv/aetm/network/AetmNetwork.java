@@ -29,17 +29,16 @@ import net.minecraftforge.network.event.EventNetworkChannel;
  */
 public final class AetmNetwork {
 
-    private static final ResourceLocation CHANNEL_NAME = new ResourceLocation(Aetm.MODID, "main");
+    private static final ResourceLocation CHANNEL_NAME = ResourceLocation.fromNamespaceAndPath(Aetm.MODID, "main");
     private static EventNetworkChannel channel;
 
     /**
      * 客户端侧的包处理入口。
      *
-     * <p>TODO(stage 2): 1.20.1 第一阶段删掉了整个 client 包，原来的
-     * {@code client.TerminalClientPackets#handle(...)}（把行数据塞进当前打开的
-     * {@code ThroughputTerminalMenu}）随之删除。第二阶段重建屏幕时，
-     * 在客户端初始化里调 {@link #setClientHandler} 把它接回来即可 ——
-     * 这样这个共同类不必再 import 任何客户端类型。
+     * <p>真正的实现由客户端初始化登记进来：{@code ClientEvents} 里调用
+     * {@link #setClientHandler} 把 {@code client.TerminalClientPackets::handle}
+     * （把行数据塞进当前打开的 {@code ThroughputTerminalMenu}）接上 ——
+     * 这样这个共同类不必 import 任何客户端类型，服务端也不会加载客户端类。
      */
     private static Consumer<TerminalRowsPacket> clientHandler = message -> {
     };

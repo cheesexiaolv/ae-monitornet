@@ -85,7 +85,7 @@ public class TerminalWindow {
      * + 无参 {@code GuiComponent.blit} 那条路已随 {@code GuiComponent} 一起消失），所以把路径提成常量。
      */
     private static final ResourceLocation TEX_WINDOW =
-            new ResourceLocation("ae2", "textures/guis/aetm_window.png");
+            ResourceLocation.fromNamespaceAndPath("ae2", "textures/guis/aetm_window.png");
 
     // ---- AE 调色板（面板底/标题栏/槽框已改由贴图 aetm_window.png 绘制，这里只剩按钮与文字用的颜色）----
     /** 内上/左亮边（按钮的亮边也用它）。 */

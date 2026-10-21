@@ -63,8 +63,8 @@ public class CommonEvents {
      *
      * <p><b>幂等</b>：{@code GridLinkables.register} 对同一个物品重复登记会
      * {@code Preconditions.checkState} 抛 {@code IllegalStateException}，
-     * 所以这里先查再登记。（1.19.2 里 AE2WTLib 的 {@code AE2WtLibHook.init()} 会兜一次底；
-     * 1.20.1 第一阶段该集成已删，这段保证将来补回 WUT 时仍然安全。）
+     * 所以这里先查再登记。（1.19.2 里 AE2WTLib 的 {@code AE2WtLibHook.init()} 也会兜一次底；
+     * 1.20.1 的 WUT 集成已由 {@code xmod.ae2wtlib.AE2WtLibPlugin} 恢复，这段仍然保证幂等。）
      */
     @SubscribeEvent
     public static void onCommonSetup(FMLCommonSetupEvent event) {

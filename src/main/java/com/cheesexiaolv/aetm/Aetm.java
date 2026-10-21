@@ -9,7 +9,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -52,8 +51,17 @@ public class Aetm {
             })
             .build());
 
-    public Aetm() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    /**
+     * 构造函数。
+     *
+     * <p>Forge 47 起推荐用<b>构造器注入</b>拿到语言加载器的上下文
+     * （{@code FMLModContainer.constructMod()} 先找带 {@code FMLJavaModLoadingContext} 参数的构造器，
+     * 找不到才退回无参构造器），这样不必再调已弃用的
+     * {@code FMLJavaModLoadingContext.get()} / {@code ModLoadingContext.get()}；
+     * 传进来的是同一个实例，行为不变。
+     */
+    public Aetm(FMLJavaModLoadingContext context) {
+        IEventBus modEventBus = context.getModEventBus();
         ModItems.ITEMS.register(modEventBus);
         TABS.register(modEventBus);
 
@@ -66,6 +74,6 @@ public class Aetm {
 
         // 配置文件：服务端类型 → <存档>/serverconfig/aetm-server.toml
         // Forge 会监听该文件，改完即时生效（热加载），无需重启
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, AetmConfig.SPEC);
+        context.registerConfig(ModConfig.Type.SERVER, AetmConfig.SPEC);
     }
 }
