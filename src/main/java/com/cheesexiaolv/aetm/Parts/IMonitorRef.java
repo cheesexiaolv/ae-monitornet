@@ -9,17 +9,17 @@ import appeng.api.stacks.AEKey;
 
 /**
  * 终端的"一个吞吐量监控器"抽象 —— 让终端既能认 <b>aetm 自己的</b>监控器，
- * 也能认 <b>aebackports</b> 的监控器（同一存档里两个 mod 共存时的兼容层）。
+ * 也能认 <b>AdvancedAE（AAE）</b>的监控器（同一存档里两个 mod 共存时的兼容层）。
  *
  * <p>为什么要这一层：{@code ThroughputTerminalMenu} 原来是按
  * {@code ThroughputMonitorPart.class.isAssignableFrom(machineClass)} 枚举的，
- * 而 aebackports 的部件是<b>另一个包里的另一个类</b>（{@code com.cheesexiaolv.aebackports.Parts.ThroughputMonitorPart}），
+ * 而 AAE 的部件是<b>另一个包里的另一个类</b>（{@code net.pedroksl.advanced_ae.common.parts.ThroughputMonitorPart}），
  * 既不是我们的子类、也不能 import（否则就变成硬依赖了）。
  *
  * <p>所以这里只留下终端真正需要的那点信息；两种实现分别见：
  * <ul>
  *   <li>{@code PartMonitorRef} —— 直接包 aetm 的 {@link ThroughputMonitorPart}（类型安全，无反射）；</li>
- *   <li>{@code AaeMonitorRef} —— 包 aebackports 的部件，<b>全靠反射</b>（类名只在运行时用
+ *   <li>{@code AaeMonitorRef} —— 包 AAE 的部件，<b>全靠反射</b>（类名只在运行时用
  *       {@code Class.forName} 取，类里不出现对方的任何类型）。</li>
  * </ul>
  */
@@ -48,7 +48,7 @@ public interface IMonitorRef {
     @Nullable
     ResourceLocation dimension();
 
-    /** 是否是"高级"监控器（有历史曲线的那一类）；aebackports 的部件没有历史，恒为 false。 */
+    /** 是否是"高级"监控器（有历史曲线的那一类）；AAE 的部件没有历史，恒为 false。 */
     boolean advanced();
 
     /**
@@ -63,7 +63,7 @@ public interface IMonitorRef {
     /**
      * 用"配置器"切换该零件的速率档位。
      *
-     * <p>aetm 的零件直接调自己的 {@code onPartActivate}；aebackports 的零件走反射调它的
+     * <p>aetm 的零件直接调自己的 {@code onPartActivate}；AAE 的零件走反射调它的
      * {@code onPartActivate}（它的实现里认它自己的配置器、然后 cycle 档位）。
      *
      * @return 是否真的切换了

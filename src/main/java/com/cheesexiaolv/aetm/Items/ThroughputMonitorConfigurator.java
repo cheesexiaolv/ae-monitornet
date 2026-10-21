@@ -19,10 +19,10 @@ import org.jetbrains.annotations.NotNull;
  * <p>装了两个 mod 时要能<b>一把配置器通吃</b>：
  * <ul>
  *   <li>aetm 自家的监控器（普通 / 高级）→ 直接调它的 {@code onPartActivate}；</li>
- *   <li>aebackports 的监控器（如果装了）→ 走 {@link MonitorRefs} 的<b>反射桥</b>，
+ *   <li>AdvancedAE 的监控器（如果装了）→ 走 {@link MonitorRefs} 的<b>反射桥</b>，
  *       调它的 {@code onPartActivate}（对方实现里认它自己的配置器，然后 cycle 档位）。</li>
  * </ul>
- * aebackports 的配置器只认它自己的部件类（{@code instanceof}），所以想同时管两类监控器时用 aetm 这把即可。
+ * AAE 的配置器只认它自己的部件类（{@code instanceof}），所以想同时管两类监控器时用 aetm 这把即可。
  * 对方 mod 不存在、或它的实现变了导致反射失败时，{@link IMonitorRef#cycleRoutineByConfigurator} 返回 false，
  * 这里就当作"没点到监控器"继续往下走（{@code InteractionResult.PASS}），不会崩。
  */
@@ -45,7 +45,7 @@ public class ThroughputMonitorConfigurator extends Item {
                 return InteractionResult.PASS;
             }
 
-            // 自家零件走类型安全路径；aebackports 的零件由 MonitorRefs 用反射包装
+            // 自家零件走类型安全路径；AAE 的零件由 MonitorRefs 用反射包装
             if (part instanceof ThroughputMonitorPart own) {
                 if (!level.isClientSide && context.getPlayer() != null) {
                     own.onPartActivate(context.getPlayer(), context.getHand(), context.getClickLocation());

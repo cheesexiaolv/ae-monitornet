@@ -13,7 +13,7 @@ import appeng.api.stacks.AEKey;
 /**
  * {@link IMonitorRef} 的"自家零件"实现：直接包 aetm 的 {@link ThroughputMonitorPart}。
  *
- * <p>类型安全、零反射（aebackports 的部件才需要反射，见 {@code AaeMonitorRef}）。
+ * <p>类型安全、零反射（AAE 的部件才需要反射，见 {@code AaeMonitorRef}）。
  *
  * <p>包私有：外面只通过 {@link MonitorRefs#of} 拿 {@link IMonitorRef}。
  */

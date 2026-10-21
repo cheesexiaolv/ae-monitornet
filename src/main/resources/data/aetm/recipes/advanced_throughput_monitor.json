@@ -7,6 +7,13 @@
           "type": "forge:not",
           "value": {
             "type": "forge:mod_loaded",
+            "modid": "advanced_ae"
+          }
+        },
+        {
+          "type": "forge:not",
+          "value": {
+            "type": "forge:mod_loaded",
             "modid": "aebackports"
           }
         },
@@ -23,6 +30,29 @@
         "ingredients": [
           {
             "item": "aetm:throughput_monitor"
+          },
+          {
+            "item": "ae2:engineering_processor"
+          }
+        ],
+        "result": {
+          "item": "aetm:advanced_throughput_monitor",
+          "count": 1
+        }
+      }
+    },
+    {
+      "conditions": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "advanced_ae"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shapeless",
+        "ingredients": [
+          {
+            "item": "advanced_ae:throughput_monitor"
           },
           {
             "item": "ae2:engineering_processor"

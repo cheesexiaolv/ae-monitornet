@@ -67,18 +67,15 @@ ordering="NONE"
 side="BOTH"
 
 # This mod is an AE2 addon: it extends AE2's monitor part API and therefore hard-depends on AE2.
+# 1.20.1 branch: AE2 15.x (the only AE2 line that exists for MC 1.20.1 / Forge 47).
 [[dependencies.${mod_id}]]
 modId="ae2"
 mandatory=true
-versionRange="[12.9.9,13.0.0)"
+versionRange="[15.4.10,16)"
 ordering="AFTER"
 side="BOTH"
 
-# AE2WTLib：无线存储监控终端可以注册进它的「通用终端 / WUT」，在通用终端里切换到本终端。
-# 纯软依赖：没装时该终端照旧当普通 AE2 无线终端用（安全终端链接 + WAP 范围），相关类一个都不会被加载。
-[[dependencies.${mod_id}]]
-modId="ae2wtlib"
-mandatory=false
-versionRange="[12.9.7,)"
-ordering="AFTER"
-side="BOTH"
+# TODO(stage 2): AE2WTLib（WUT / 通用终端）集成待补。
+# 1.19.2 有一整段 [[dependencies]] 声明 ae2wtlib 为软依赖，并由 xmod/ae2wtlib 包实现
+# 「同一个无线终端既能当普通无线终端、也能在通用终端里切换」。1.20.1 第一阶段因为本机没有
+# 该版本的 jar，整个包与这里的依赖段一并删除（见 docs/port-1.20.1.md）。

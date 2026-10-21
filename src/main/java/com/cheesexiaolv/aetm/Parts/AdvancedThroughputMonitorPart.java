@@ -8,10 +8,8 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.parts.IPartItem;
 import appeng.api.stacks.GenericStack;
-import appeng.core.AELog;
 import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocators;
-import appeng.parts.reporting.AbstractMonitorPart;
 import appeng.util.ConfigInventory;
 
 import net.minecraft.nbt.CompoundTag;
@@ -205,20 +203,16 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     /**
      * 配置槽变化：更新监控对象，并重配 watcher。
      *
-     * <p>AE2 的 {@code AbstractMonitorPart.configureWatchers()} 是 private，这里反射调用它，
-     * 以便监控对象切换后 watcher 立即盯新物品（amount 也会随之刷新）。
+     * <p>AE2 12.9.9 的 {@code AbstractMonitorPart#configureWatchers()} 是 <b>private</b>，1.19.2 只能反射调；
+     * <b>AE2 15.4.10 已把它改成 protected</b>（{@code AbstractMonitorPart.java:270}
+     * {@code protected void configureWatchers()}），所以这里直接调用，去掉整段反射与失败路径。
      */
     private void onConfigChanged() {
         var key = this.config.getKey(0);
         setConfiguredItem(key);
 
-        try {
-            var method = AbstractMonitorPart.class.getDeclaredMethod("configureWatchers");
-            method.setAccessible(true);
-            method.invoke(this);
-        } catch (ReflectiveOperationException e) {
-            AELog.warn("Failed to reconfigure throughput monitor watcher: ", e);
-        }
+        // 监控对象切换后 watcher 立即盯新物品（amount 也会随之刷新）
+        configureWatchers();
 
         clearSampleCache();
         // 换了监控对象，历史曲线清零重来

@@ -2,6 +2,10 @@ package com.cheesexiaolv.aetm.Parts;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 
@@ -16,22 +20,29 @@ import appeng.core.AELog;
 import appeng.parts.reporting.AbstractMonitorPart;
 
 /**
- * {@link IMonitorRef} 的"aebackports 零件"实现 —— <b>整条桥都是软依赖</b>。
+ * {@link IMonitorRef} 的"AdvancedAE 零件"实现 —— <b>整条桥都是软依赖</b>。
  *
- * <p>aebackports 的部件是 {@code com.cheesexiaolv.aebackports.Parts.ThroughputMonitorPart}
- * （另一个包里的另一个类，与 aetm 的同名类毫无继承关系）。本类<b>不 import 它的任何类型</b>：
- * 类名字符串只在运行时由 {@link MonitorRefs} 用 {@code Class.forName} 取一次；
- * 而真正调用的方法全部落在两边共用的 <b>AE2</b> 基类 {@link AbstractMonitorPart} 上
- * （{@code getDisplayed() / getAmount() / getBlockEntity() / getLevel()}），所以绝大部分读取是类型安全的。
+ * <p>目标的部件是
+ * {@code net.pedroksl.advanced_ae.common.parts.ThroughputMonitorPart}
+ * （{@code extends appeng.parts.reporting.AbstractMonitorPart implements IGridTickable}，
+ * 见 {@code reference/AdvancedAE-1.20.1-1.3.4/.../common/parts/ThroughputMonitorPart.java}）。
+ * 本类<b>不 import 它的任何类型</b>：类名字符串只在运行时由 {@link MonitorRefs} 用
+ * {@code Class.forName} 取；真正调用的方法全部落在两边共用的 <b>AE2</b> 基类
+ * {@link AbstractMonitorPart} 上（{@code getDisplayed() / getAmount() / getBlockEntity() / getLevel()}），
+ * 所以绝大部分读取是类型安全的。
  *
- * <p>只有两处必须反射（aebackports 侧没有公开这些 API）：
+ * <p>只有三处必须反射（AAE 侧没有公开这些 API）：
  * <ol>
- *   <li>读它的私有字段 {@code workRoutine}（枚举）拿 {@code ordinal()} 当档位号
- *       —— 它的枚举顺序 0=t 1=s 2=m 3=10m 与 aetm 的 {@code WorkRoutine} / {@code TerminalSettings} 完全一致；</li>
+ *   <li>读它自己声明的 {@code protected double lastReportedValue}
+ *       （AAE 源码第 61 行；1.19.2 时代的 aebackports 是 {@code protected float}，这里按
+ *       {@link Number} 读，两种都能用）；</li>
+ *   <li>读它的 {@code private WorkRoutine workRoutine} 枚举字段（源码第 63 行）拿 {@code ordinal()}
+ *       当档位号 —— 它的枚举顺序 0=t 1=s 2=m 3=10m 与 aetm 的 {@code WorkRoutine} /
+ *       {@code TerminalSettings} 完全一致；</li>
  *   <li>调它的 {@code onPartActivate(player, hand, pos)} 来切档位（供 aetm 的配置器使用）。</li>
  * </ol>
  *
- * <p>两处都在 try/catch 里：aebackports 以后改了实现，最坏情况是"这个零件读不到/切不动"，
+ * <p>三处都在 try/catch 里：AAE 以后改了实现，最坏情况是"这个零件读不到/切不动"，
  * <b>不会</b>让终端或配置器崩掉（读失败返回 0 / 跳过该零件）。
  */
 final class AaeMonitorRef implements IMonitorRef {
@@ -39,40 +50,50 @@ final class AaeMonitorRef implements IMonitorRef {
     /**
      * 对面部件类的全限定名（只作为字符串出现，不 import）。
      *
-     * <p>该 mod 在 v2.0.0 由 {@code aaemonitor} 改名为 {@code aebackports}，包名一并变成小写
-     * {@code com.cheesexiaolv.aebackports}。这里新名在前、旧名兜底，两个 jar 都能用。
+     * <p>第一项是 1.20.1 分支的目标（AdvancedAE）；后两项是 1.19.2 时代的旧 id，保留兜底。
      */
     static final String[] AAE_PART_CLASSES = {
+            "net.pedroksl.advanced_ae.common.parts.ThroughputMonitorPart",
             "com.cheesexiaolv.aebackports.Parts.ThroughputMonitorPart",
             "com.cheesexiaolv.Aaemonitor.Parts.ThroughputMonitorPart",
     };
 
-    /** 依次尝试两个类名，返回第一个能加载的（都失败返回 null）。 */
-    @Nullable
-    static Class<?> resolvePartClass() {
+    /** 依次尝试所有类名，返回全部能加载的（都失败返回空列表）。 */
+    static List<Class<?>> resolvePartClasses() {
+        List<Class<?>> resolved = new ArrayList<>(AAE_PART_CLASSES.length);
         for (String className : AAE_PART_CLASSES) {
             try {
-                return Class.forName(className);
+                resolved.add(Class.forName(className));
             } catch (ClassNotFoundException | LinkageError ignored) {
                 // 试下一个名字
             }
         }
-        return null;
+        return List.copyOf(resolved);
     }
 
-    /** 该部件的档位字段名（private 枚举），以及读取它的句柄（首次用到时解析并缓存）。 */
+    /** 读档位字段名（private 枚举）。 */
     private static final String ROUTINE_FIELD = "workRoutine";
-    private static volatile Field routineField;
-    private static volatile boolean routineFieldResolved;
+    /** 读速率的字段名（protected，AAE 是 double / 旧版是 float）。 */
+    private static final String LAST_VALUE_FIELD = "lastReportedValue";
 
-    /** {@code onPartActivate(Player, InteractionHand, Vec3)} 的句柄（同样懒解析）。 */
-    private static volatile Method onPartActivate;
-    private static volatile boolean onPartActivateResolved;
+    /**
+     * 字段缓存：<b>按实际零件类</b>解析，而不是按"第一个能加载的类"。
+     *
+     * <p>为什么必须按实际类：如果整合包里同时有 AAE 和旧 id 的 jar，两边的字段声明不同
+     * （double vs float、甚至字段名都可能不同），用错类的 {@code Field} 去 {@code get()} 会抛
+     * {@code IllegalArgumentException}。{@code computeIfAbsent} 天然幂等，Map 里放 null 用一个
+     * 哨兵对象占位（{@code ConcurrentHashMap} 不允许 null value）。
+     *
+     * <p>两个字段各用一张表（key 只有 Class，混用会串），见 {@link #resolveField}。
+     */
+    private static final Map<Class<?>, Object> ROUTINE_FIELDS = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Object> LAST_VALUE_FIELDS = new ConcurrentHashMap<>();
+    private static final Object MISSING = new Object();
 
     private final AbstractMonitorPart part;
 
     /**
-     * @param part aebackports 的部件实例（已在 {@link MonitorRefs} 里用反射到的 Class 做过 {@code isInstance} 校验）
+     * @param part 对面的部件实例（已在 {@link MonitorRefs} 里用反射到的 Class 做过 {@code isInstance} 校验）
      */
     AaeMonitorRef(AbstractMonitorPart part) {
         this.part = part;
@@ -92,8 +113,17 @@ final class AaeMonitorRef implements IMonitorRef {
 
     @Override
     public double lastReportedValue() {
-        // float，不是 double；语义与 aetm 的 getLastReportedValue() 相同（"每档位量"）
-        return reflectLastReportedValue(this.part);
+        // AAE 是 double（1.19.2 的 aebackports 是 float）；语义与 aetm 的 getLastReportedValue() 相同
+        Field field = resolveField(this.part.getClass(), LAST_VALUE_FIELD);
+        if (field == null) {
+            return 0;
+        }
+        try {
+            Object value = field.get(this.part);
+            return value instanceof Number number ? number.doubleValue() : 0;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return 0;
+        }
     }
 
     @Override
@@ -120,7 +150,7 @@ final class AaeMonitorRef implements IMonitorRef {
 
     @Override
     public boolean advanced() {
-        // aebackports 没有"高级监控器"，也就没有历史曲线 → 终端只显示数值，不给曲线
+        // AAE 侧没有"高级监控器"这个概念，也就没有历史曲线 → 终端只显示数值，不给曲线
         return false;
     }
 
@@ -133,7 +163,7 @@ final class AaeMonitorRef implements IMonitorRef {
 
     @Override
     public boolean cycleRoutineByConfigurator(Player player, InteractionHand hand, Vec3 clickLocation) {
-        Method method = resolveOnPartActivate();
+        Method method = resolveOnPartActivate(this.part.getClass());
         if (method == null) {
             return false;
         }
@@ -142,13 +172,13 @@ final class AaeMonitorRef implements IMonitorRef {
             Object result = method.invoke(this.part, player, hand, clickLocation);
             return result instanceof Boolean changed && changed;
         } catch (ReflectiveOperationException | RuntimeException e) {
-            AELog.warn("aetm: failed to cycle aaemonitor throughput monitor routine", e);
+            AELog.warn("aetm: failed to cycle the AdvancedAE throughput monitor routine", e);
             return false;
         }
     }
 
     // ------------------------------------------------------------------
-    // 反射细节（全部懒解析 + 失败即降级）
+    // 反射细节（全部按实际类懒解析 + 失败即降级）
     // ------------------------------------------------------------------
 
     private static int clampRoutine(int ordinal) {
@@ -157,7 +187,7 @@ final class AaeMonitorRef implements IMonitorRef {
 
     /** 读 {@code workRoutine} 私有枚举字段的 ordinal；失败按 1（=秒档）处理。 */
     static int readRoutineOrdinal(AbstractMonitorPart part) {
-        Field field = resolveRoutineField();
+        Field field = resolveField(part.getClass(), ROUTINE_FIELD);
         if (field == null) {
             return 1;
         }
@@ -169,63 +199,39 @@ final class AaeMonitorRef implements IMonitorRef {
         }
     }
 
-    /** 读 {@code lastReportedValue} 字段（aebackports 是 protected float，没有公开 getter）。 */
-    static double reflectLastReportedValue(AbstractMonitorPart part) {
-        Field field = resolveField("lastReportedValue");
-        if (field == null) {
-            return 0;
-        }
+    @Nullable
+    private static Method resolveOnPartActivate(Class<?> partClass) {
         try {
-            Object value = field.get(part);
-            return value instanceof Number number ? number.doubleValue() : 0;
+            // public 方法（基类 AbstractMonitorPart 声明），getMethod 会沿父类链找到
+            return partClass.getMethod("onPartActivate", Player.class, InteractionHand.class, Vec3.class);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            return 0;
+            AELog.warn("aetm: the AdvancedAE part is present but onPartActivate is unavailable", e);
+            return null;
         }
-    }
-
-    @Nullable
-    private static Field resolveRoutineField() {
-        if (!routineFieldResolved) {
-            routineField = resolveField(ROUTINE_FIELD);
-            routineFieldResolved = true;
-        }
-        return routineField;
-    }
-
-    @Nullable
-    private static Method resolveOnPartActivate() {
-        if (!onPartActivateResolved) {
-            Class<?> partClass = resolvePartClass();
-            if (partClass != null) {
-                try {
-                    onPartActivate = partClass.getMethod("onPartActivate", Player.class, InteractionHand.class,
-                            Vec3.class);
-                } catch (ReflectiveOperationException | RuntimeException e) {
-                    AELog.warn("aetm: aebackports/aaemonitor part is present but onPartActivate is unavailable", e);
-                    onPartActivate = null;
-                }
-            }
-            onPartActivateResolved = true;
-        }
-        return onPartActivate;
     }
 
     /**
-     * 沿类层次找字段（对面的 {@code lastReportedValue} 是它自己声明的 protected，
-     * {@code workRoutine} 是 private；两边都用 {@code getDeclaredField} + {@code setAccessible}）。
+     * 沿类层次找字段（对面的 {@code lastReportedValue} 是 protected、{@code workRoutine} 是 private，
+     * 两边都用 {@code getDeclaredField} + {@code setAccessible}）。
      */
     @Nullable
-    private static Field resolveField(String name) {
-        Class<?> partClass = resolvePartClass();
-        if (partClass == null) {
-            return null;
-        }
-        try {
-            Field field = partClass.getDeclaredField(name);
-            field.setAccessible(true);
-            return field;
-        } catch (ReflectiveOperationException | RuntimeException e) {
-            return null;
-        }
+    private static Field resolveField(Class<?> partClass, String name) {
+        Map<Class<?>, Object> cache = ROUTINE_FIELD.equals(name) ? ROUTINE_FIELDS : LAST_VALUE_FIELDS;
+        Object cached = cache.computeIfAbsent(partClass, cls -> {
+            for (Class<?> current = cls; current != null && current != Object.class;
+                    current = current.getSuperclass()) {
+                try {
+                    Field field = current.getDeclaredField(name);
+                    field.setAccessible(true);
+                    return field;
+                } catch (NoSuchFieldException ignored) {
+                    // 继续往父类找
+                } catch (RuntimeException e) {
+                    return MISSING;
+                }
+            }
+            return MISSING;
+        });
+        return cached == MISSING ? null : (Field) cached;
     }
 }

@@ -42,7 +42,7 @@ import appeng.menu.implementations.MenuTypeBuilder;
  * <p>工作方式（参照 AE2 自己的样板管理终端）：
  * <ol>
  *   <li>每个 tick 遍历 {@code grid.getMachineClasses()}，把<b>本网络的吞吐量监控器</b>枚举出来
- *       —— 包括 aetm 自己的（普通/高级）以及装了 <b>aebackports</b> 时它那边的监控器
+ *       —— 包括 aetm 自己的（普通/高级）以及装了 <b>AdvancedAE</b> 时它那边的监控器
  *       （兼容桥见 {@link MonitorRefs}/{@link IMonitorRef}；离线的、区块没加载的自然不在集合里）；</li>
  *   <li><b>按被监控的 key 合并成一行</b>——同一网络里多个监控器盯同一个 key 时读到的是同一份数据，
  *       所以合并无损，多出来的监控器只作为「来源」列出；</li>
@@ -255,7 +255,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
 
     /**
      * 收集本网络上的所有吞吐量监控器：
-     * <b>aetm 自己的</b>（普通 + 高级）以及<b>装了 aebackports 时它的</b>监控器。
+     * <b>aetm 自己的</b>（普通 + 高级）以及<b>装了 AdvancedAE 时它的</b>监控器。
      *
      * <p>⚠️ 必须像 AE2 的样板管理终端那样<b>遍历 {@code getMachineClasses()} 再按可赋值性筛选</b>：
      * AE2 的 {@code Grid} 是按节点宿主的<b>运行时类</b>登记机器的（{@code Grid.java:105}
@@ -263,8 +263,8 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
      * {@code grid.getActiveMachines(ThroughputMonitorPart.class)} 只会命中普通监控器，
      * 派生出来的高级监控器（{@code AdvancedThroughputMonitorPart}）会漏掉。
      *
-     * <p>aebackports 的部件是另一个包里的另一个类（不认识我们的基类），所以这里改走
-     * {@link MonitorRefs#isMonitorClass} + {@link MonitorRefs#of}：它内部对 aebackports 那侧
+     * <p>AAE 的部件是另一个包里的另一个类（不认识我们的基类），所以这里改走
+     * {@link MonitorRefs#isMonitorClass} + {@link MonitorRefs#of}：它内部对 AAE 那侧
      * 只在"装了该 mod"时才反射解析，并统一包装成 {@link IMonitorRef} 给 {@link ServerRow} 用。
      */
     private void collectMonitors(IGrid grid, Map<AEKey, ServerRow> byKey) {
@@ -279,7 +279,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
     /**
      * 把一个具体零件类下的所有活动零件收进行表。
      *
-     * <p>这里用的是"原始 Class + getActiveMachines(raw)"：aebackports 的类我们拿不到泛型类型，
+     * <p>这里用的是"原始 Class + getActiveMachines(raw)"：AAE 的类我们拿不到泛型类型，
      * 也不能 import，所以统一按 {@code Class<?>} 处理，再交给 {@link MonitorRefs#of} 包装。
      */
     private void collectFromClass(IGrid grid, Class<?> monitorClass, Map<AEKey, ServerRow> byKey) {
@@ -756,7 +756,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
      * 服务端一行（可能由多个监控器供给）。
      *
      * <p>持的是 {@link IMonitorRef} 而不是具体的零件类型 —— 这样 aetm 自家的监控器与
-     * aebackports 的监控器能混在同一张表里（同 key 合并、按坐标排序、选最细档位当数值来源，
+     * AAE 的监控器能混在同一张表里（同 key 合并、按坐标排序、选最细档位当数值来源，
      * 这些逻辑都与实现无关）。
      */
     private static final class ServerRow {
@@ -773,7 +773,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
 
         final AEKey key;
         final List<IMonitorRef> monitors = new ArrayList<>();
-        /** 有历史曲线的高级监控器（aetm 专属；aebackports 的部件没有历史，这里恒为 null）。 */
+        /** 有历史曲线的高级监控器（aetm 专属；AAE 的部件没有历史，这里恒为 null）。 */
         @Nullable
         AdvancedThroughputMonitorPart historySource;
         @Nullable

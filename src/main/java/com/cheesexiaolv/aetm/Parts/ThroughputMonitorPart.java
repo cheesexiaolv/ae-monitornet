@@ -21,6 +21,7 @@ import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
+import appeng.api.orientation.BlockOrientation;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AmountFormat;
@@ -410,12 +411,17 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
 
         poseStack.pushPose();
         poseStack.translate(0.5, 0.5, 0.5);
-        BlockEntityRenderHelper.rotateToFace(poseStack, getSide(), getSpin());
+        // AE2 15.x: rotateToFace(PoseStack, BlockOrientation)。1.19.2 是 (PoseStack, Direction, byte spin)，
+        // 现在先把 (side, spin) 合成一个 BlockOrientation（AE2 的 StorageMonitorPart 也是这么写的）。
+        BlockOrientation orientation = BlockOrientation.get(getSide(), getSpin());
+        BlockEntityRenderHelper.rotateToFace(poseStack, orientation);
 
         // 物品图标与数量
+        // AE2 15.x: renderItem2dWithAmount 多了 canCraft 与 Level 两个参数（1.19.2 是 7 个参数）。
         poseStack.translate(0, 0.1, 0.5);
         BlockEntityRenderHelper.renderItem2dWithAmount(
-                poseStack, buffers, getDisplayed(), getAmount(), 0.3F, -0.15F, getColor().contrastTextColor);
+                poseStack, buffers, getDisplayed(), getAmount(), canCraft(),
+                0.3F, -0.15F, getColor().contrastTextColor, getLevel());
 
         // 速率文字
         poseStack.translate(0, -0.23F, 0);
@@ -475,7 +481,8 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
                 false,
                 poseStack.last().pose(),
                 buffers,
-                false,
+                // 1.20.1: 第 8 个参数从 boolean(transparent) 变成 Font.DisplayMode
+                Font.DisplayMode.NORMAL,
                 0,
                 15728880);
         poseStack.popPose();
