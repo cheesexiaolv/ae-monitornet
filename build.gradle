@@ -73,6 +73,10 @@ dependencies {
     // AE2 15.4.10 -- the ONLY hard dependency. Taken from libs/ as a production jar and
     // deobfuscated with fg.deobf so the official (Mojang) names line up with the dev workspace.
     compileOnly fg.deobf("blank:appliedenergistics2-forge:${ae2_version}")
+    // 开发运行时（runClient / runServer）也要能加载 AE2，否则 FML 报 "ae2 is not installed"。
+    // guideme 是 AE2 15.x 的 mandatory 前置（AE2 的 mods.toml：guideme [20.1.7,20.2.0)）。
+    runtimeOnly fg.deobf("blank:appliedenergistics2-forge:${ae2_version}")
+    runtimeOnly fg.deobf("blank:guideme:20.1.14")
 
     // Removed for 1.20.1 (stage 1), see docs/port-1.20.1.md:
     //   - ae2wtlib / architectury / cloth-config / curios  -> xmod.ae2wtlib package deleted
