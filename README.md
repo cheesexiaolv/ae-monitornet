@@ -60,8 +60,8 @@ Right-click a part to open its GUI; double-click a row in the terminal to open t
 This mod is licensed under **GNU LGPL-3.0** (see `LICENSE`).
 
 The ME throughput monitor parts are **ported to 1.19.2 from
-[AdvancedAE](https://github.com/pedroksl/AdvancedAE) by Pedroksl (LGPL-3.0)**, which itself
-descends from GTLCore's throughput monitoring. The advanced monitor's sampling history,
+[AdvancedAE](https://github.com/pedroksl/AdvancedAE) by Pedroksl (LGPL-3.0)**.
+The advanced monitor's sampling history,
 the line chart, the terminal and its chart windows are this project's own work.
 See `NOTICE.txt` for the full attribution list and for what is derived vs. original.
 
@@ -112,7 +112,7 @@ compiled and play-tested by a human before release.
 
 本模组以 **GNU LGPL-3.0** 发布（见 `LICENSE`）。
 
-ME 吞吐量监控器系列部件是**从 [AdvancedAE](https://github.com/pedroksl/AdvancedAE)（作者 Pedroksl，LGPL-3.0）移植到 1.19.2 的**，而后者又源自 GTLCore 的吞吐量监控。高级监控器的采样历史、折线图、终端及其曲线子窗口是本项目自己的实现。
+ME 吞吐量监控器系列部件是**从 [AdvancedAE](https://github.com/pedroksl/AdvancedAE)（作者 Pedroksl，LGPL-3.0）移植到 1.19.2 的**。高级监控器的采样历史、折线图、终端及其曲线子窗口是本项目自己的实现。
 完整的署名列表、以及"哪些是移植、哪些是原创"的划分见 `NOTICE.txt`。
 
 ### 关于代码来源
