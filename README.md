@@ -31,8 +31,6 @@ versions: **1.19.2 (Forge 43)** and **1.20.1 (Forge 47)**.
 
 - Mod id: `ae_monitornet`.
 - CurseForge slug: `ae-monitornet`.
-- Renamed from `aetm` in 1.1.0. Existing worlds keep working: item ids change, but the terminal
-  settings stored in item/part NBT are still read back from the old `aetm*` keys.
 
 ### What it adds
 
@@ -73,9 +71,6 @@ Java 17 is enough for both targets. Nothing besides AE2 is mandatory.
 - `chartRefreshMultiplier` — how often terminal chart windows ask for a fresh curve, as a multiple of
   the sampling interval (default `1.0`, up to `4.0`)
 
-Older worlds may still have an `aetm-server.toml` from the pre-rename builds; the new file starts with
-the defaults, so re-apply your values once and delete the old file.
-
 ### Building
 
 ```bash
@@ -83,12 +78,13 @@ the defaults, so re-apply your values once and delete the old file.
 ./gradlew runClient      # dev client
 ```
 
-On Windows use `gradlew.bat` instead of `./gradlew`. Add `--offline` if the Gradle dependency cache is
-already warm and you do not want Gradle to touch the network.
+On Windows use `gradlew.bat` instead of `./gradlew` (for example `gradlew.bat build --offline`). Add
+`--offline` when the Gradle dependency cache is already warm and you do not want Gradle to touch the
+network.
 
-Each Minecraft version lives on its own branch (`main` = 1.19.2, `aetm-1.20.1` = 1.20.1); check out the
-branch you want and build it there. The 1.19.2 branch resolves AE2 12.9.9 as a normal Gradle dependency;
-the 1.20.1 branch expects the AE2 15.4.10 jar in `libs/`.
+Each Minecraft version lives on its own branch (`main` and `aetm-1.19.2` = 1.19.2, `aetm-1.20.1` =
+1.20.1); check out the branch you want and build it there. The 1.19.2 branch resolves AE2 12.9.9 as a
+normal Gradle dependency; the 1.20.1 branch expects the AE2 15.4.10 jar in `libs/`.
 
 ### License and attribution
 
@@ -108,6 +104,10 @@ Most of the code in this repository was written by an AI assistant (DeepSeek Har
 specifications, review and in-game testing by the repository owner. It was reviewed, compiled and
 play-tested by a human before release.
 
+### Migration
+
+This mod used to be called **AE Throughput Monitor** (mod id `aetm`) and is now **AE MonitorNet** (`ae_monitornet`); old NBT keys are still read back, and an old `aetm-server.toml` has to be copied over to `ae_monitornet-server.toml` by hand.
+
 ---
 
 ## 中文
@@ -117,8 +117,6 @@ play-tested by a human before release.
 
 - 模组 id：`ae_monitornet`。
 - CurseForge slug：`ae-monitornet`。
-- 1.1.0 起由 `aetm` 改名。旧存档仍可用：物品 id 变了，但终端设置在物品/零件 NBT 里的
-  `aetm*` 旧键仍会回退读取。
 
 ### 新增内容
 
@@ -156,9 +154,6 @@ play-tested by a human before release.
 - `historyCapacity` —— 每个监控器保留的采样点数量（默认 `3600`）
 - `chartRefreshMultiplier` —— 终端曲线窗口向服务端请求新曲线的频率，按采样间隔的倍数计（默认 `1.0`，上限 `4.0`）
 
-改名前的旧存档里可能还留着 `aetm-server.toml`；新文件会以默认值重新生成，把旧值抄一次过来、
-再删掉旧文件即可。
-
 ### 构建
 
 ```bash
@@ -166,10 +161,12 @@ play-tested by a human before release.
 ./gradlew runClient      # 启动开发客户端
 ```
 
-Windows 上把 `./gradlew` 换成 `gradlew.bat`。依赖缓存已经齐全、不想让 Gradle 联网时，再加 `--offline`。
+Windows 上把 `./gradlew` 换成 `gradlew.bat`（例如 `gradlew.bat build --offline`）。依赖缓存已经齐全、
+不想让 Gradle 联网时，再加 `--offline`。
 
-每个 Minecraft 版本各在一条分支上（`main` = 1.19.2，`aetm-1.20.1` = 1.20.1），切到目标分支再构建；
-1.19.2 分支把 AE2 12.9.9 当普通 Gradle 依赖解析，1.20.1 分支需要把 AE2 15.4.10 的 jar 放进 `libs/`。
+每个 Minecraft 版本各在一条分支上（`main` / `aetm-1.19.2` = 1.19.2，`aetm-1.20.1` = 1.20.1），切到
+目标分支再构建；1.19.2 分支把 AE2 12.9.9 当普通 Gradle 依赖解析，1.20.1 分支需要把 AE2 15.4.10 的 jar
+放进 `libs/`。
 
 ### 许可与署名
 
@@ -184,3 +181,7 @@ LGPL-3.0）：1.20.1 版直接使用这些部件，1.19.2 版是同一批部件�
 ### 关于代码来源
 
 本仓库绝大部分代码由 AI 助手（DeepSeek Harness）根据仓库所有者的需求、评审与实机测试编写；发布前经过人工审阅、编译与实机游玩验证。
+
+### 迁移
+
+本模组原名为 **AE Throughput Monitor**（modid `aetm`），现更名为 **AE MonitorNet**（`ae_monitornet`）；旧 NBT 键仍可读取，旧的 `aetm-server.toml` 需要手动把值抄到 `ae_monitornet-server.toml`。

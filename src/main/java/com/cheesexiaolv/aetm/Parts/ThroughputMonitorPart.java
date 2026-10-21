@@ -1,5 +1,6 @@
 package com.cheesexiaolv.aetm.Parts;
 
+import com.cheesexiaolv.aetm.AeMonitorNet;
 import com.cheesexiaolv.aetm.Items.ThroughputMonitorConfigurator;
 import com.cheesexiaolv.aetm.Logic.ThroughputCache;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -27,7 +28,6 @@ import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.util.AEColor;
 import appeng.client.render.BlockEntityRenderHelper;
-import appeng.core.AppEng;
 import appeng.hooks.ticking.TickHandler;
 import appeng.parts.PartModel;
 import appeng.parts.reporting.AbstractMonitorPart;
@@ -42,14 +42,21 @@ import java.util.Locale;
  * 通过滑动时间窗计算平均速率，并在面板上同时渲染 物品图标 + 数量 + 速率文字。
  * 速率周期可用“吞吐量监控配置器”在 per tick / per second / per minute / per 10 minutes 间循环。
  *
- * <p>模型直接复用 AE2 自带的 Storage Monitor 模型与状态灯（Advanced AE 参考实现亦如此），
- * 因此无需自定义 part 模型资源，也不会再产生缺失模型的加载警告。
+ * <p>世界里的外观是<b>自有</b>模型：几何继承 AE2 的 {@code part/display_base} 与
+ * {@code part/storage_monitor_*}，正面底图与三层高亮换成本模组的
+ * {@code ae_monitornet:part/monitor_front*}；状态灯仍用 AE2 的 {@code part/display_status_*}。
  */
 public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridTickable {
 
-    // 💡 模型：与 Advanced AE 参考实现一致，直接使用 AE2 的 Storage Monitor 外观与状态灯
-    public static final ResourceLocation MODEL_OFF = AppEng.makeId("part/storage_monitor_off");
-    public static final ResourceLocation MODEL_ON = AppEng.makeId("part/storage_monitor_on");
+    // 自有 part 模型（世界渲染用）。普通版与高级版（{@link AdvancedThroughputMonitorPart}）共用；
+    // 三个 id 必须交给 AE2 的烘焙器登记（见 PartModelsRegistration），否则世界里不会显示。
+    // MODEL_BASE 有意遮蔽基类 AbstractDisplayPart 的同名常量（基类那份是 ae2:part/display_base）。
+    public static final ResourceLocation MODEL_BASE =
+            ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/monitor_base");
+    public static final ResourceLocation MODEL_OFF =
+            ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/monitor_off");
+    public static final ResourceLocation MODEL_ON =
+            ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/monitor_on");
 
     public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE, MODEL_OFF, MODEL_STATUS_OFF);
     public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_ON);
