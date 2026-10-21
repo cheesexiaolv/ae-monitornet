@@ -5,7 +5,6 @@ import com.cheesexiaolv.aetm.menu.AdvancedThroughputMonitorMenu;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
