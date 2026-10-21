@@ -21,6 +21,7 @@ This addon adds throughput monitoring to Applied Energistics 2. It has two kinds
 
 ## ME Throughput Monitor
 
+<ItemImage id="aetm:throughput_monitor" scale="2" />
 <ItemLink id="aetm:throughput_monitor" />
 
 The basic sensor. Place it on an ME cable and right-click it with the item (or fluid) you want to watch; the face then
@@ -31,6 +32,7 @@ the face is redrawn immediately. The monitor stops sampling while nothing is bei
 
 ## Advanced ME Throughput Monitor
 
+<ItemImage id="aetm:advanced_throughput_monitor" scale="2" />
 <ItemLink id="aetm:advanced_throughput_monitor" />
 
 The same sensor, plus a configuration slot in its GUI, a sampling history and a line chart (storage / flow /
@@ -41,12 +43,14 @@ Only the advanced monitor records history. A row can only show a chart when an a
 
 ## Throughput Monitor Configurator
 
+<ItemImage id="aetm:throughput_monitor_configurator" scale="2" />
 <ItemLink id="aetm:throughput_monitor_configurator" />
 
 A hand-held tool: right-click a monitor to cycle its rate tier (t / s / m / 10m) without opening any GUI.
 
 ## ME Storage Monitor Terminal
 
+<ItemImage id="aetm:throughput_terminal" scale="2" />
 <ItemLink id="aetm:throughput_terminal" />
 
 A cable part that needs power and a channel. It lists every throughput monitor on the same network and merges the
@@ -59,6 +63,7 @@ Locate, which highlights the monitor in the world.
 
 ## Wireless ME Storage Monitor Terminal
 
+<ItemImage id="aetm:wireless_throughput_terminal" scale="2" />
 <ItemLink id="aetm:wireless_throughput_terminal" />
 
 The same terminal as an AE2 wireless terminal. Link it in a Security Terminal, then use it while inside the range of a
