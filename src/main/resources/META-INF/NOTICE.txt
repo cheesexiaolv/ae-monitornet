@@ -2,9 +2,9 @@ AE Throughput Monitor (modid: aetm) - third party notices
 ==========================================================
 
 This mod is a derivative work. The ME throughput monitor parts are ported to
-Minecraft 1.19.2 from AdvancedAE, which itself derives from GTLCore's
-throughput monitoring. Only the "advanced" throughput monitor (its sampling
-history, unit derivation, chart and the terminal UI) is our own implementation.
+Minecraft 1.19.2 from AdvancedAE. Only the "advanced" throughput monitor (its
+sampling history, unit derivation, chart and the terminal UI) is our own
+implementation.
 
 1. AdvancedAE  (https://github.com/pedroksl/AdvancedAE)
    Author: Pedroksl
@@ -21,11 +21,6 @@ history, unit derivation, chart and the terminal UI) is our own implementation.
    Used as: required dependency and API surface (parts, grid services, menus,
    screens, widgets, storage watchers). No AE2 source file is copied into this
    mod; AE2 is compiled against, never bundled.
-
-3. GTLCore  (throughput monitoring lineage)
-   License: GNU LGPL-3.0
-   AdvancedAE's throughput monitor descends from GTLCore's implementation; the
-   ported code therefore carries that lineage as well.
 
 Original work in this mod (not derived from the projects above):
   - ThroughputHistory: discontinuity-aware sampling history, per-window series

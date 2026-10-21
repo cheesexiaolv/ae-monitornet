@@ -63,8 +63,8 @@ Right-click a part to open its GUI; double-click a row in the terminal to open t
 This mod is licensed under **GNU LGPL-3.0** (see `LICENSE`).
 
 The ME throughput monitor parts are **ported to 1.19.2 from
-[AdvancedAE](https://github.com/pedroksl/AdvancedAE) by Pedroksl (LGPL-3.0)**, which itself
-descends from GTLCore's throughput monitoring. The advanced monitor's sampling history,
+[AdvancedAE](https://github.com/pedroksl/AdvancedAE) by Pedroksl (LGPL-3.0)**.
+The advanced monitor's sampling history,
 the line chart, the terminal and its chart windows are this project's own work.
 See `NOTICE.txt` for the full attribution list and for what is derived vs. original.
 
