@@ -19,7 +19,7 @@ import appeng.parts.reporting.AbstractMonitorPart;
  * {@link IMonitorRef} 的"aebackports 零件"实现 —— <b>整条桥都是软依赖</b>。
  *
  * <p>aebackports 的部件是 {@code com.cheesexiaolv.aebackports.Parts.ThroughputMonitorPart}
- * （另一个包里的另一个类，与 aetm 的同名类毫无继承关系）。本类<b>不 import 它的任何类型</b>：
+ * （另一个包里的另一个类，与 本模组 的同名类毫无继承关系）。本类<b>不 import 它的任何类型</b>：
  * 类名字符串只在运行时由 {@link MonitorRefs} 用 {@code Class.forName} 取一次；
  * 而真正调用的方法全部落在两边共用的 <b>AE2</b> 基类 {@link AbstractMonitorPart} 上
  * （{@code getDisplayed() / getAmount() / getBlockEntity() / getLevel()}），所以绝大部分读取是类型安全的。
@@ -27,8 +27,8 @@ import appeng.parts.reporting.AbstractMonitorPart;
  * <p>只有两处必须反射（aebackports 侧没有公开这些 API）：
  * <ol>
  *   <li>读它的私有字段 {@code workRoutine}（枚举）拿 {@code ordinal()} 当档位号
- *       —— 它的枚举顺序 0=t 1=s 2=m 3=10m 与 aetm 的 {@code WorkRoutine} / {@code TerminalSettings} 完全一致；</li>
- *   <li>调它的 {@code onPartActivate(player, hand, pos)} 来切档位（供 aetm 的配置器使用）。</li>
+ *       —— 它的枚举顺序 0=t 1=s 2=m 3=10m 与 本模组 的 {@code WorkRoutine} / {@code TerminalSettings} 完全一致；</li>
+ *   <li>调它的 {@code onPartActivate(player, hand, pos)} 来切档位（供 本模组 的配置器使用）。</li>
  * </ol>
  *
  * <p>两处都在 try/catch 里：aebackports 以后改了实现，最坏情况是"这个零件读不到/切不动"，
@@ -92,7 +92,7 @@ final class AaeMonitorRef implements IMonitorRef {
 
     @Override
     public double lastReportedValue() {
-        // float，不是 double；语义与 aetm 的 getLastReportedValue() 相同（"每档位量"）
+        // float，不是 double；语义与 本模组 的 getLastReportedValue() 相同（"每档位量"）
         return reflectLastReportedValue(this.part);
     }
 
@@ -138,11 +138,11 @@ final class AaeMonitorRef implements IMonitorRef {
             return false;
         }
         try {
-            // 它的 onPartActivate 里认它自己的配置器、然后 cycle 档位（与 aetm 的实现同构）
+            // 它的 onPartActivate 里认它自己的配置器、然后 cycle 档位（与 本模组 的实现同构）
             Object result = method.invoke(this.part, player, hand, clickLocation);
             return result instanceof Boolean changed && changed;
         } catch (ReflectiveOperationException | RuntimeException e) {
-            AELog.warn("aetm: failed to cycle aaemonitor throughput monitor routine", e);
+            AELog.warn("AE MonitorNet: failed to cycle aaemonitor throughput monitor routine", e);
             return false;
         }
     }
@@ -201,7 +201,7 @@ final class AaeMonitorRef implements IMonitorRef {
                     onPartActivate = partClass.getMethod("onPartActivate", Player.class, InteractionHand.class,
                             Vec3.class);
                 } catch (ReflectiveOperationException | RuntimeException e) {
-                    AELog.warn("aetm: aebackports/aaemonitor part is present but onPartActivate is unavailable", e);
+                    AELog.warn("AE MonitorNet: aebackports/aaemonitor part is present but onPartActivate is unavailable", e);
                     onPartActivate = null;
                 }
             }

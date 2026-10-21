@@ -210,7 +210,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     public void drawBG(PoseStack poseStack, int offsetX, int offsetY, int mouseX, int mouseY, float partialTicks) {
         super.drawBG(poseStack, offsetX, offsetY, mouseX, mouseY, partialTicks);
 
-        this.bindTexture("guis/aetm_terminal.png");
+        this.bindTexture("guis/ae_monitornet_terminal.png");
 
         // ===== 原版 AE2 终端的 5 段切片（全部 195 宽，同一张贴图）=====
         //   header   固定顶部
@@ -269,8 +269,8 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
      */
     private static List<Component> routineGlobalTooltipLines() {
         return List.of(
-                Component.translatable("gui.aetm.tip.routine_global"),
-                Component.translatable("gui.aetm.tip.routine_global.hint"));
+                Component.translatable("gui.ae_monitornet.tip.routine_global"),
+                Component.translatable("gui.ae_monitornet.tip.routine_global.hint"));
     }
 
     /**
@@ -402,15 +402,15 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     private List<Component> buildRowTooltip(TerminalRow row) {
         var lines = new ArrayList<Component>();
         lines.add(row.key().getDisplayName());
-        lines.add(Component.translatable("gui.aetm.terminal.tip.amount", amountText(row)));
-        lines.add(Component.translatable("gui.aetm.terminal.tip.rate", rateText(row)));
+        lines.add(Component.translatable("gui.ae_monitornet.terminal.tip.amount", amountText(row)));
+        lines.add(Component.translatable("gui.ae_monitornet.terminal.tip.rate", rateText(row)));
         for (var source : row.sources()) {
             String prefix = source.advanced() ? "★ " : "· ";
             lines.add(Component.literal(prefix + shortDimension(source.dimension()) + " "
                     + source.pos().toShortString()));
         }
         if (!row.hasHistory()) {
-            lines.add(Component.translatable("gui.aetm.terminal.tip.no_history"));
+            lines.add(Component.translatable("gui.ae_monitornet.terminal.tip.no_history"));
         }
         return lines;
     }
@@ -753,15 +753,15 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         // 状态行只留"出错"类提示（未连网 / 网络里没有监控器）；行数提示已按要求去掉
         var rows = this.menu.getRows();
         if (!this.menu.networkAvailable) {
-            this.setTextContent("status_text", Component.translatable("gui.aetm.terminal.no_network"));
+            this.setTextContent("status_text", Component.translatable("gui.ae_monitornet.terminal.no_network"));
         } else if (rows.isEmpty()) {
-            this.setTextContent("status_text", Component.translatable("gui.aetm.terminal.no_monitors"));
+            this.setTextContent("status_text", Component.translatable("gui.ae_monitornet.terminal.no_monitors"));
         } else {
             this.setTextContent("status_text", Component.empty());
         }
 
         // 头部第二行：全局速率单位（一次改所有行；按钮上只写当前值 t/s/m/10m，全称在 tooltip 里）
-        this.globalRoutineButton.setMessage(Component.translatable("gui.aetm.tbtn.routine_global",
+        this.globalRoutineButton.setMessage(Component.translatable("gui.ae_monitornet.tbtn.routine_global",
                 TerminalSettings.routineUnit(globalRoutine())));
         this.globalRoutineButton.active = !rows.isEmpty();
 

@@ -7,7 +7,7 @@ import net.minecraftforge.fml.ModList;
 import appeng.parts.reporting.AbstractMonitorPart;
 
 /**
- * <b>aetm ↔ aebackports 的兼容桥入口</b>：把"任意一个吞吐量监控器零件"包成 {@link IMonitorRef}。
+ * <b>本模组 ↔ aebackports 的兼容桥入口</b>：把"任意一个吞吐量监控器零件"包成 {@link IMonitorRef}。
  *
  * <p>设计要点（用户硬性要求：两个 mod 同时装、同一存档里两边的监控器都要能用终端看到）：
  * <ul>
@@ -42,7 +42,7 @@ public final class MonitorRefs {
         return false;
     }
 
-    /** 档位 → tick 数（与 aetm 自己的 {@code WorkRoutine} / {@code ThroughputTerminalPart.ROUTINE_TICKS} 一致）。 */
+    /** 档位 → tick 数（与 本模组 自己的 {@code WorkRoutine} / {@code ThroughputTerminalPart.ROUTINE_TICKS} 一致）。 */
     static final int[] ROUTINE_TICKS = { 1, 20, 1200, 12000 };
 
     /** aebackports 部件类（惰性解析；null = 没装 / 解析失败）。 */
@@ -59,7 +59,7 @@ public final class MonitorRefs {
     /**
      * 把零件包成 {@link IMonitorRef}。
      *
-     * @param part 一个零件实例（aetm 的、或 aebackports 的；其它类型返回 null）
+     * @param part 一个零件实例（本模组 的、或 aebackports 的；其它类型返回 null）
      * @return 包装对象；不认识该类型、或 aebackports 侧不可用时返回 {@code null}
      */
     @Nullable
@@ -93,7 +93,7 @@ public final class MonitorRefs {
         return aaeClass != null && aaeClass.isInstance(part);
     }
 
-    /** 该 {@code machineClass} 是不是（aetm 或 aebackports 的）吞吐量监控器。 */
+    /** 该 {@code machineClass} 是不是（本模组 或 aebackports 的）吞吐量监控器。 */
     public static boolean isMonitorClass(Class<?> machineClass) {
         if (ThroughputMonitorPart.class.isAssignableFrom(machineClass)) {
             return true;
@@ -114,7 +114,7 @@ public final class MonitorRefs {
             if (isProviderLoaded()) {
                 aaePartClass = AaeMonitorRef.resolvePartClass();
                 if (aaePartClass == null) {
-                    appeng.core.AELog.warn("aetm: the throughput-monitor addon (aebackports / old aaemonitor) "
+                    appeng.core.AELog.warn("AE MonitorNet: the throughput-monitor addon (aebackports / old aaemonitor) "
                             + "is loaded but its throughput monitor part could not be resolved; "
                             + "its monitors will not show up in the terminal");
                 }

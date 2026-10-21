@@ -60,7 +60,7 @@ public final class ThroughputHistory {
         RATE("flow"),
         ACCELERATION("accel");
 
-        /** 语言键后缀：gui.aetm.metric.&lt;key&gt; */
+        /** 语言键后缀：gui.ae_monitornet.metric.&lt;key&gt; */
         public final String key;
 
         Metric(String key) {

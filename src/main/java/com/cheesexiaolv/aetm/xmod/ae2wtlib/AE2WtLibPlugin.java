@@ -1,6 +1,6 @@
 package com.cheesexiaolv.aetm.xmod.ae2wtlib;
 
-import com.cheesexiaolv.aetm.Aetm;
+import com.cheesexiaolv.aetm.AeMonitorNet;
 
 import net.minecraft.core.Registry;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -18,7 +18,7 @@ import net.minecraftforge.registries.RegisterEvent;
  * 真正调用 AE2WTLib API 的代码全部放在 {@link AE2WtLibHook}，只有确认装了 mod 之后才会被加载
  * （与隔壁 aebackports 工程同一套隔离模式）。
  */
-@Mod.EventBusSubscriber(modid = Aetm.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = AeMonitorNet.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class AE2WtLibPlugin {
 
     public static final String MOD_ID = "ae2wtlib";
@@ -30,7 +30,7 @@ public final class AE2WtLibPlugin {
      * 挂"提前占热键 id"的监听器。
      *
      * <p>必须在 mod 构造函数里、自己的 {@code DeferredRegister} 之后调用一次
-     * （见 {@link Aetm}）：Forge 的 mod 事件总线按监听器登记顺序派发，
+     * （见 {@link AeMonitorNet}）：Forge 的 mod 事件总线按监听器登记顺序派发，
      * 这样我们的物品注册表在事件里一定先于本监听器填好。
      *
      * <p>时机与被占的东西：AE2 在客户端 Minecraft 构造期就会关闭热键注册窗口，

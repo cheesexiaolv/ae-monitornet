@@ -2,7 +2,7 @@ package com.cheesexiaolv.aetm.network;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.cheesexiaolv.aetm.Aetm;
+import com.cheesexiaolv.aetm.AeMonitorNet;
 
 import io.netty.buffer.Unpooled;
 
@@ -27,7 +27,7 @@ import net.minecraftforge.network.event.EventNetworkChannel;
  */
 public final class AetmNetwork {
 
-    private static final ResourceLocation CHANNEL_NAME = new ResourceLocation(Aetm.MODID, "main");
+    private static final ResourceLocation CHANNEL_NAME = new ResourceLocation(AeMonitorNet.MODID, "main");
     private static EventNetworkChannel channel;
 
     private AetmNetwork() {

@@ -1,0 +1,24 @@
+{
+  "type": "forge:conditional",
+  "recipes": [
+    {
+      "conditions": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "ae2wtlib"
+        }
+      ],
+      "recipe": {
+        "type": "ae2wtlib:combine",
+        "terminalA": {
+          "item": "ae_monitornet:wireless_throughput_terminal"
+        },
+        "terminalB": {
+          "item": "ae2wtlib:wireless_pattern_encoding_terminal"
+        },
+        "terminalAName": "throughput",
+        "terminalBName": "pattern_encoding"
+      }
+    }
+  ]
+}

@@ -1,19 +1,19 @@
-AE Throughput Monitor (modid: aetm) - third party notices
+AE MonitorNet (modid: ae_monitornet) - third party notices
 ==========================================================
 
-This mod is a derivative work. The ME throughput monitor parts are ported to
-Minecraft 1.19.2 from AdvancedAE. Only the "advanced" throughput monitor (its
-sampling history, unit derivation, chart and the terminal UI) is our own
-implementation.
+This mod is a derivative work. The ME throughput monitor parts are ported from
+AdvancedAE (its 1.20.1 line) down to Minecraft 1.19.2, and the same parts are
+used by the 1.20.1 build. The "advanced" throughput monitor (its sampling
+history, unit derivation, chart and the terminal UI) is our own implementation.
 
 1. AdvancedAE  (https://github.com/pedroksl/AdvancedAE)
    Author: Pedroksl
    License: GNU LGPL-3.0
    Used for: the ME throughput monitor part (ThroughputMonitorPart), its
    sliding-window rate cache (ThroughputCache) and the per-tick sampling
-   behaviour, which this mod ports from 1.20.1 down to 1.19.2. The rate unit
-   cycling (per tick / second / minute / 10 minutes) and the "monitor a
-   configured item/fluid and draw an icon + amount + rate on the part face"
+   behaviour, which this mod ports from the 1.20.1 line down to 1.19.2. The
+   rate unit cycling (per tick / second / minute / 10 minutes) and the "monitor
+   a configured item/fluid and draw an icon + amount + rate on the part face"
    behaviour come from that implementation.
 
 2. Applied Energistics 2  (https://github.com/AppliedEnergistics/Applied-Energistics-2)
@@ -21,6 +21,12 @@ implementation.
    Used as: required dependency and API surface (parts, grid services, menus,
    screens, widgets, storage watchers). No AE2 source file is copied into this
    mod; AE2 is compiled against, never bundled.
+   Also: the part-face and terminal textures under
+   assets/ae_monitornet/textures/ (terminal_front*, monitor_front*,
+   item/wireless_terminal) are unmodified copies of the matching AE2 texture
+   files. They are kept byte-identical and stay under AE2's LGPL-3.0 license;
+   they exist only so this mod can ship its own editable copies of the faces it
+   reuses.
 
 Original work in this mod (not derived from the projects above):
   - ThroughputHistory: discontinuity-aware sampling history, per-window series
@@ -29,6 +35,7 @@ Original work in this mod (not derived from the projects above):
   - ThroughputChart: the in-GUI line chart renderer.
   - AdvancedThroughputMonitorPart, the storage monitor terminal (part + item),
     the draggable per-target chart windows, the block highlight ("locate")
-    feature, the terminal row merging/sync protocol and all GUI textures.
+    feature, the terminal row merging/sync protocol and all GUI textures
+    (except the AE2-derived part faces listed above).
 
 All trademarks and copyrights remain with their respective owners.

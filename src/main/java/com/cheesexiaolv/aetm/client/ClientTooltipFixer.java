@@ -1,6 +1,6 @@
 package com.cheesexiaolv.aetm.client;
 
-import com.cheesexiaolv.aetm.Aetm;
+import com.cheesexiaolv.aetm.AeMonitorNet;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.Mod;
  * 注册那些 provider 的，而该类的加载晚于加载完成事件 —— 那时注册表还是空的，删不到东西，
  * 反而把我们自己的 provider 提前加进去，导致提示行重复。
  */
-@Mod.EventBusSubscriber(modid = Aetm.MODID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = AeMonitorNet.MODID, value = Dist.CLIENT)
 public final class ClientTooltipFixer {
 
     private static boolean installed;

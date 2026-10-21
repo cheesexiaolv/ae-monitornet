@@ -11,7 +11,7 @@
 <br>
 
 ---
-# AE Throughput Monitor (aetm) / AE2存储监控
+# AE MonitorNet（ae_monitornet）/ 监控网络
 
 本mod原本只是对高版本aae中吞吐量监控器的向下移植，但在许多其他游戏的启发之下，我决定开发一系列好用的扩展功能，实现对网络库存（甚至其它！）的更好监控。\
 本mod使用肥鱼v41Flash在DSH中完成开发，代码部分100%由肥鱼完成。感谢梁圣开源，让我也有自己开发mod的机会。\
@@ -29,6 +29,11 @@
 Monitoring tools and monitoring terminals for **Applied Energistics 2**, shipped for two Minecraft
 versions: **1.19.2 (Forge 43)** and **1.20.1 (Forge 47)**.
 
+- Mod id: `ae_monitornet`.
+- CurseForge slug: `ae-monitornet`.
+- Renamed from `aetm` in 1.1.0. Existing worlds keep working: item ids change, but the terminal
+  settings stored in item/part NBT are still read back from the old `aetm*` keys.
+
 ### What it adds
 
 | Item | Description |
@@ -39,7 +44,8 @@ versions: **1.19.2 (Forge 43)** and **1.20.1 (Forge 47)**.
 | **Wireless ME Storage Monitor Terminal** | The same terminal as an AE2 wireless terminal: link it in a Security Terminal and use it inside a Wireless Access Point's range. |
 | **Throughput Monitor Configurator** | A hand-held tool: right-click a monitor to cycle its rate tier without opening any GUI. |
 
-Right-click a part to open its GUI; **double-click a row** in the terminal to open that row's floating chart window.
+Right-click a part to open its GUI; **double-click a row** in the terminal to open that row's floating
+chart window.
 
 ### Supported versions
 
@@ -54,18 +60,21 @@ Java 17 is enough for both targets. Nothing besides AE2 is mandatory.
 
 * **AE2WTLib** — the wireless terminal registers itself as one of the Universal Terminal's switchable
   terminals, so you can put it in a Universal Terminal and switch to it from there.
-* **GuideME** (1.20.1) — an in-game guide page covers every item: `/guideme open @s aetm:guide`, or hold
-  **G** in a container with one of our items under the cursor.
+* **GuideME** (1.20.1) — an in-game guide page covers every item: `/guideme open @s ae_monitornet:guide`,
+  or hold **G** in a container with one of our items under the cursor.
 * **JEI / Jade** — we ship no plugins of our own; they coexist with the mod (recipe display comes from AE2).
 
 ### Configuration
 
-`<save>/serverconfig/aetm-server.toml` (hot-reloaded):
+`<save>/serverconfig/ae_monitornet-server.toml` (hot-reloaded, no restart needed):
 
 - `samplingIntervalTicks` — how often monitors read the network (default `10` = 0.5 s)
 - `historyCapacity` — samples kept per monitor (default `3600`)
 - `chartRefreshMultiplier` — how often terminal chart windows ask for a fresh curve, as a multiple of
   the sampling interval (default `1.0`, up to `4.0`)
+
+Older worlds may still have an `aetm-server.toml` from the pre-rename builds; the new file starts with
+the defaults, so re-apply your values once and delete the old file.
 
 ### Building
 
@@ -74,17 +83,24 @@ Java 17 is enough for both targets. Nothing besides AE2 is mandatory.
 ./gradlew runClient      # dev client
 ```
 
+On Windows use `gradlew.bat` instead of `./gradlew`. Add `--offline` if the Gradle dependency cache is
+already warm and you do not want Gradle to touch the network.
+
 Each Minecraft version lives on its own branch (`main` = 1.19.2, `aetm-1.20.1` = 1.20.1); check out the
-branch you want and build it there. The 1.20.1 build expects the AE2 15.4.10 jar in `libs/`.
+branch you want and build it there. The 1.19.2 branch resolves AE2 12.9.9 as a normal Gradle dependency;
+the 1.20.1 branch expects the AE2 15.4.10 jar in `libs/`.
 
 ### License and attribution
 
 This mod is licensed under **GNU LGPL-3.0** (see `LICENSE`).
 
-The ME throughput monitor parts are **ported from
-[AdvancedAE](https://github.com/pedroksl/AdvancedAE) by Pedroksl (LGPL-3.0)** to 1.19.2 and 1.20.1.
-The advanced monitor's sampling history, the line chart, the terminals and their chart windows are this
-project's own work. See `NOTICE.txt` for the full attribution list and for what is derived vs. original.
+The ME throughput monitor parts come from
+[AdvancedAE](https://github.com/pedroksl/AdvancedAE) by Pedroksl (LGPL-3.0): the 1.20.1 build uses them
+as they are, and the 1.19.2 build is a port of the same parts. The advanced monitor's sampling history,
+the line chart, the terminals and their chart windows are this project's own work. The part-face
+textures shipped in `assets/ae_monitornet/textures/` are unmodified copies of AE2's own part textures
+and stay under AE2's LGPL-3.0 license. See `NOTICE.txt` for the full attribution list and for what is
+derived vs. original.
 
 ### Note on authorship
 
@@ -99,14 +115,19 @@ play-tested by a human before release.
 **适用于 Applied Energistics 2（应用能源2）的监控工具与监控终端**，目前同时提供
 **1.19.2（Forge 43）** 与 **1.20.1（Forge 47）** 两个版本。
 
+- 模组 id：`ae_monitornet`。
+- CurseForge slug：`ae-monitornet`。
+- 1.1.0 起由 `aetm` 改名。旧存档仍可用：物品 id 变了，但终端设置在物品/零件 NBT 里的
+  `aetm*` 旧键仍会回退读取。
+
 ### 新增内容
 
 | 物品 | 说明 |
 |---|---|
 | **ME 吞吐量监控器** | 线缆部件：监控网络中某一种物品/流体，在部件表面显示图标 + 存量 + 速率。速率单位用配置器或界面按钮循环切换（每 tick / 每秒 / 每分钟 / 每 10 分钟）。 |
 | **高级 ME 吞吐量监控器** | 同上，另带界面内配置槽、采样历史，以及可选时间窗口的折线图（存量 / 流量 / 加速度）。 |
-| **ME 存储监控终端** | 线缆部件：列出**同一网络上所有吞吐量监控器**，把监控同一对象的多个监控器合并成一行，并为每行打开**可拖动的独立曲线子窗口**（显示槽 + 折线图 + 每个窗口独立的指标/单位按钮 +「定位」世界里高亮）。 |
-| **无线 ME 存储监控终端** | 与上面相同的终端，但做成 AE2 无线终端：在安全终端里链接，待在无线访问点范围内使用。 |
+| **存储监控终端** | 线缆部件：列出**同一网络上所有吞吐量监控器**，把监控同一对象的多个监控器合并成一行，并为每行打开**可拖动的独立曲线子窗口**（显示槽 + 折线图 + 每个窗口独立的指标/单位按钮 +「定位」世界里高亮）。 |
+| **无线存储监控终端** | 与上面相同的终端，但做成 AE2 无线终端：在安全终端里链接，待在无线访问点范围内使用。 |
 | **吞吐量监控配置器** | 手持工具：右键监控器即可循环切换速率档位，不用打开任何界面。 |
 
 右键部件打开它的界面；在终端里**双击某一行**打开该行的浮动曲线子窗口。
@@ -123,17 +144,20 @@ play-tested by a human before release.
 ### 可选集成
 
 * **AE2WTLib** —— 无线终端会注册成通用终端（Universal Terminal）里可切换的一个终端。
-* **GuideME**（仅 1.20.1）—— 游戏内指南一页覆盖全部物品：`/guideme open @s aetm:guide`，或在容器界面里
-  对着本模组的物品**按住 G**。
+* **GuideME**（仅 1.20.1）—— 游戏内指南一页覆盖全部物品：`/guideme open @s ae_monitornet:guide`，
+  或在容器界面里对着本模组的物品**按住 G**。
 * **JEI / Jade** —— 本模组不自带插件，与它们共存（配方展示由 AE2 自己提供）。
 
 ### 配置
 
-`<存档>/serverconfig/aetm-server.toml`（支持热重载）：
+`<存档>/serverconfig/ae_monitornet-server.toml`（支持热重载，无需重启）：
 
 - `samplingIntervalTicks` —— 监控器读取网络的间隔（默认 `10`，即 0.5 秒）
 - `historyCapacity` —— 每个监控器保留的采样点数量（默认 `3600`）
 - `chartRefreshMultiplier` —— 终端曲线窗口向服务端请求新曲线的频率，按采样间隔的倍数计（默认 `1.0`，上限 `4.0`）
+
+改名前的旧存档里可能还留着 `aetm-server.toml`；新文件会以默认值重新生成，把旧值抄一次过来、
+再删掉旧文件即可。
 
 ### 构建
 
@@ -142,16 +166,20 @@ play-tested by a human before release.
 ./gradlew runClient      # 启动开发客户端
 ```
 
+Windows 上把 `./gradlew` 换成 `gradlew.bat`。依赖缓存已经齐全、不想让 Gradle 联网时，再加 `--offline`。
+
 每个 Minecraft 版本各在一条分支上（`main` = 1.19.2，`aetm-1.20.1` = 1.20.1），切到目标分支再构建；
-1.20.1 的构建需要把 AE2 15.4.10 的 jar 放进 `libs/`。
+1.19.2 分支把 AE2 12.9.9 当普通 Gradle 依赖解析，1.20.1 分支需要把 AE2 15.4.10 的 jar 放进 `libs/`。
 
 ### 许可与署名
 
 本模组以 **GNU LGPL-3.0** 发布（见 `LICENSE`）。
 
-ME 吞吐量监控器系列部件**移植自 [AdvancedAE](https://github.com/pedroksl/AdvancedAE)（作者 Pedroksl，LGPL-3.0）**，
-并适配到 1.19.2 与 1.20.1。高级监控器的采样历史、折线图、终端及其曲线子窗口是本项目自己的实现。
-完整的署名列表、以及"哪些是移植、哪些是原创"的划分见 `NOTICE.txt`。
+ME 吞吐量监控器系列部件来自 [AdvancedAE](https://github.com/pedroksl/AdvancedAE)（作者 Pedroksl，
+LGPL-3.0）：1.20.1 版直接使用这些部件，1.19.2 版是同一批部件的向下移植。高级监控器的采样历史、
+折线图、终端及其曲线子窗口是本项目自己的实现。`assets/ae_monitornet/textures/` 里的部件正面贴图
+是 AE2 原贴图的逐字节副本，仍按 AE2 的 LGPL-3.0 授权。完整的署名列表、以及"哪些是移植、哪些是原创"
+的划分见 `NOTICE.txt`。
 
 ### 关于代码来源
 

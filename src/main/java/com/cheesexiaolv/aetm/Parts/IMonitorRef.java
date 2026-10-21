@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import appeng.api.stacks.AEKey;
 
 /**
- * 终端的"一个吞吐量监控器"抽象 —— 让终端既能认 <b>aetm 自己的</b>监控器，
+ * 终端的"一个吞吐量监控器"抽象 —— 让终端既能认 <b>本模组 自己的</b>监控器，
  * 也能认 <b>aebackports</b> 的监控器（同一存档里两个 mod 共存时的兼容层）。
  *
  * <p>为什么要这一层：{@code ThroughputTerminalMenu} 原来是按
@@ -18,7 +18,7 @@ import appeng.api.stacks.AEKey;
  *
  * <p>所以这里只留下终端真正需要的那点信息；两种实现分别见：
  * <ul>
- *   <li>{@code PartMonitorRef} —— 直接包 aetm 的 {@link ThroughputMonitorPart}（类型安全，无反射）；</li>
+ *   <li>{@code PartMonitorRef} —— 直接包 本模组 的 {@link ThroughputMonitorPart}（类型安全，无反射）；</li>
  *   <li>{@code AaeMonitorRef} —— 包 aebackports 的部件，<b>全靠反射</b>（类名只在运行时用
  *       {@code Class.forName} 取，类里不出现对方的任何类型）。</li>
  * </ul>
@@ -55,7 +55,7 @@ public interface IMonitorRef {
      * 高级监控器实例（供终端按行取曲线用）；不是高级监控器时返回 {@code null}。
      *
      * <p>返回 {@code Object} 是为了不让这个接口反向依赖 {@code AdvancedThroughputMonitorPart}；
-     * 菜单自己 cast —— 它本来就只对 {@code advanced() == true} 的行做这件事（只有 aetm 的高级版有历史曲线）。
+     * 菜单自己 cast —— 它本来就只对 {@code advanced() == true} 的行做这件事（只有 本模组 的高级版有历史曲线）。
      */
     @Nullable
     Object historySource();
@@ -63,7 +63,7 @@ public interface IMonitorRef {
     /**
      * 用"配置器"切换该零件的速率档位。
      *
-     * <p>aetm 的零件直接调自己的 {@code onPartActivate}；aebackports 的零件走反射调它的
+     * <p>本模组 的零件直接调自己的 {@code onPartActivate}；aebackports 的零件走反射调它的
      * {@code onPartActivate}（它的实现里认它自己的配置器、然后 cycle 档位）。
      *
      * @return 是否真的切换了

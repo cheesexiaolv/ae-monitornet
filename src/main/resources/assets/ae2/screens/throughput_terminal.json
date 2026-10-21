@@ -4,7 +4,7 @@
   "text": {
     "dialog_title": {
       "text": {
-        "translate": "item.aetm.throughput_terminal"
+        "translate": "item.ae_monitornet.throughput_terminal"
       },
       "position": {
         "left": 8,
@@ -13,7 +13,7 @@
     },
     "status_text": {
       "text": {
-        "translate": "gui.aetm.terminal.status"
+        "translate": "gui.ae_monitornet.terminal.status"
       },
       "position": {
         "left": 8,

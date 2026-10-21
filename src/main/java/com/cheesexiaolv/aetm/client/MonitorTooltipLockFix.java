@@ -58,7 +58,7 @@ public final class MonitorTooltipLockFix implements BodyProvider<AbstractMonitor
 
             PartTooltips.addBody(AbstractMonitorPart.class, new MonitorTooltipLockFix());
         } catch (Throwable t) {
-            AELog.warn("aetm: failed to strip AE2 monitor lock tooltip line", t);
+            AELog.warn("AE MonitorNet: failed to strip AE2 monitor lock tooltip line", t);
         }
     }
 

@@ -21,7 +21,7 @@ public class ThroughputTerminalWirelessMenu extends ThroughputTerminalMenu {
 
     public static final MenuType<ThroughputTerminalWirelessMenu> TYPE = MenuTypeBuilder
             .create(ThroughputTerminalWirelessMenu::new, WirelessTerminalMenuHost.class)
-            .withMenuTitle(host -> Component.translatable("item.aetm.wireless_throughput_terminal"))
+            .withMenuTitle(host -> Component.translatable("item.ae_monitornet.wireless_throughput_terminal"))
             .build("wireless_throughput_terminal");
 
     public ThroughputTerminalWirelessMenu(int id, Inventory playerInventory, WirelessTerminalMenuHost host) {

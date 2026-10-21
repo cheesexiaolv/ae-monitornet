@@ -81,7 +81,7 @@ public class TerminalWindow {
     private static final int DRAG_KEEP_W = 24;
     private static final int DRAG_KEEP_H = 16;
 
-    // ---- AE 调色板（面板底/标题栏/槽框已改由贴图 aetm_window.png 绘制，这里只剩按钮与文字用的颜色）----
+    // ---- AE 调色板（面板底/标题栏/槽框已改由贴图 ae_monitornet_window.png 绘制，这里只剩按钮与文字用的颜色）----
     /** 内上/左亮边（按钮的亮边也用它）。 */
     private static final int COL_HILIGHT = 0xFFFFFFFF;
     /** 内下/右暗边（按钮的暗边也用它）。 */
@@ -149,34 +149,34 @@ public class TerminalWindow {
         // 标题栏按钮（从右往左排：× 方块 → 位 → 窗 → 量）。
         // 文字只写"当前值"（AE 风格短标），全称放悬停提示里；都改的是"选中行"，
         // 所以先 selectRow(rowIndex) 再发动作。
-        this.buttons.add(new WindowButton("gui.aetm.tip.metric", WIDE_BTN_W, false,
+        this.buttons.add(new WindowButton("gui.ae_monitornet.tip.metric", WIDE_BTN_W, false,
                 (row, window) -> metricLabel(row),
                 (screen, window) -> {
                     screen.selectRow(window.rowIndex);
                     screen.cycleRowMetric();
                     screen.requestRowSeries(window.rowIndex);
                 }));
-        this.buttons.add(new WindowButton("gui.aetm.tip.window", WIDE_BTN_W, false,
+        this.buttons.add(new WindowButton("gui.ae_monitornet.tip.window", WIDE_BTN_W, false,
                 (row, window) -> windowLabel(row),
                 (screen, window) -> {
                     screen.selectRow(window.rowIndex);
                     screen.cycleRowWindow();
                     screen.requestRowSeries(window.rowIndex);
                 }));
-        this.buttons.add(new WindowButton("gui.aetm.tip.fluid", WIDE_BTN_W, true,
+        this.buttons.add(new WindowButton("gui.ae_monitornet.tip.fluid", WIDE_BTN_W, true,
                 (row, window) -> unitLabel(row),
                 (screen, window) -> {
                     screen.selectRow(window.rowIndex);
                     screen.toggleRowUnit();
                     screen.requestRowSeries(window.rowIndex);
                 }));
-        this.buttons.add(new WindowButton("gui.aetm.window.close", CLOSE_BTN_SIZE, false,
+        this.buttons.add(new WindowButton("gui.ae_monitornet.window.close", CLOSE_BTN_SIZE, false,
                 (row, window) -> "×",
                 (screen, window) -> window.requestClose()));
 
         // 「定位」：在世界里给该行第一个来源监控器画红色描边。没有来源时置灰不可点。
         // ⚠️ 只借 EAE 定位按钮的"机制"，不画它那个红色箭头图标 —— 这里就是一个普通文字长按钮。
-        this.locateButton = new WindowButton("gui.aetm.window.tip.locate", LOCATE_BTN_W, false,
+        this.locateButton = new WindowButton("gui.ae_monitornet.window.tip.locate", LOCATE_BTN_W, false,
                 (row, window) -> LOCATE_LABEL,
                 (screen, window) -> screen.locateRow(window.rowIndex));
     }
@@ -198,9 +198,9 @@ public class TerminalWindow {
         int w = WIDTH;
         int h = HEIGHT;
 
-        // 面板底图：来自贴图 guis/aetm_window.png（画布 256×256，图案在左上角 180×112，1:1 贴）
+        // 面板底图：来自贴图 guis/ae_monitornet_window.png（画布 256×256，图案在左上角 180×112，1:1 贴）
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderTexture(0, new ResourceLocation("ae2", "textures/guis/aetm_window.png"));
+        RenderSystem.setShaderTexture(0, new ResourceLocation("ae2", "textures/guis/ae_monitornet_window.png"));
         GuiComponent.blit(poseStack, x, y, 0, 0, w, h, 256, 256);
 
         TerminalRow row = rowOf(screen);
@@ -282,13 +282,13 @@ public class TerminalWindow {
         int slotX = x + SLOT_ROW_X;
         int slotY = y + SLOT_ROW_Y;
 
-        // 槽框（外亮边 / 底色 / 上左暗沿）已删除：这一块由贴图 aetm_window.png 绘制，
+        // 槽框（外亮边 / 底色 / 上左暗沿）已删除：这一块由贴图 ae_monitornet_window.png 绘制，
         // 代码只把物品图标画在槽内（下面 drawInGui），不再画任何底/边。
 
         int textX = x + SLOT_TEXT_X;
         int textRight = x + WIDTH - 5;
         if (row == null) {
-            font.draw(poseStack, Component.translatable("gui.aetm.window.no_history"),
+            font.draw(poseStack, Component.translatable("gui.ae_monitornet.window.no_history"),
                     textX, slotY + 7, COL_TEXT_DIM);
             return;
         }
@@ -333,7 +333,7 @@ public class TerminalWindow {
         ThroughputHistory.Series series = row == null ? null : screen.seriesFor(this.rowIndex);
         if (row == null || !row.hasHistory() || series == null || series.values().length < 2) {
             drawHint(poseStack, font, chartX, chartY, CHART_W, CHART_H,
-                    Component.translatable("gui.aetm.window.no_history"));
+                    Component.translatable("gui.ae_monitornet.window.no_history"));
             return;
         }
 

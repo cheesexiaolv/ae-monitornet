@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import appeng.api.stacks.AEKey;
 
 /**
- * {@link IMonitorRef} 的"自家零件"实现：直接包 aetm 的 {@link ThroughputMonitorPart}。
+ * {@link IMonitorRef} 的"自家零件"实现：直接包 本模组 的 {@link ThroughputMonitorPart}。
  *
  * <p>类型安全、零反射（aebackports 的部件才需要反射，见 {@code AaeMonitorRef}）。
  *
@@ -76,7 +76,7 @@ final class PartMonitorRef implements IMonitorRef {
 
     @Override
     public boolean cycleRoutineByConfigurator(Player player, InteractionHand hand, Vec3 clickLocation) {
-        // 自家零件：它的 onPartActivate 认得 aetm 的配置器并 cycle 档位
+        // 自家零件：它的 onPartActivate 认得 本模组 的配置器并 cycle 档位
         return this.part.onPartActivate(player, hand, clickLocation);
     }
 }

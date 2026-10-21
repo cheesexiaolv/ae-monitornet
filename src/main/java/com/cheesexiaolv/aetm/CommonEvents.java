@@ -23,7 +23,7 @@ import appeng.items.tools.powered.WirelessTerminalItem;
  * 但该队列只对 AE2 自己的菜单在正确时机 flush。第三方按 ae2wtlib 的做法，
  * 在 {@code RegisterEvent(MENU_REGISTRY)} 里用 Forge 注册表真注册一次。
  */
-@Mod.EventBusSubscriber(modid = Aetm.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = AeMonitorNet.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class CommonEvents {
 
     @SubscribeEvent

@@ -27,7 +27,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
  * 显示模型里 tintindex 1–4 的多层高亮贴图）。第三方零件物品不会被 AE2 自动处理，若不手动注册，
  * {@code ae2:item/display_base} 那几层会按原色叠加渲染，导致物品图标异常。这里补齐同样的处理。
  */
-@Mod.EventBusSubscriber(modid = Aetm.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = AeMonitorNet.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientEvents {
 
     @SubscribeEvent
