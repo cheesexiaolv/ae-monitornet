@@ -3,6 +3,7 @@ package com.cheesexiaolv.aetm.Parts;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.cheesexiaolv.aetm.AeMonitorNet;
 import com.cheesexiaolv.aetm.Logic.TerminalSettings;
 import com.cheesexiaolv.aetm.Logic.TerminalSettingsNbt;
 import com.cheesexiaolv.aetm.menu.ThroughputTerminalMenu;
@@ -16,7 +17,6 @@ import net.minecraft.world.phys.Vec3;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEKey;
-import appeng.core.AppEng;
 import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocators;
 import appeng.parts.PartModel;
@@ -33,12 +33,19 @@ import appeng.parts.reporting.AbstractDisplayPart;
  * 并清空所有单行覆盖；单行按钮只改那一行。设置通过 {@link ITerminalSettingsHost} 暴露，
  * 无线终端（物品）用同样的接口实现，因此两者共用同一套菜单与界面。
  *
- * <p>外观复用 AE2 的样板管理终端零件模型（与本模组监控器复用存储监控器模型同理，避免缺失模型）。
+ * <p>世界里的外观是<b>自有</b>模型：几何继承 AE2 的 {@code part/display_base} 与
+ * {@code part/pattern_access_terminal_*}，正面底图与三层高亮则换成自有贴图
+ * （{@code ae_monitornet:part/terminal_front*}），不再露出 AE2 的花纹底图。
  */
 public class ThroughputTerminalPart extends AbstractDisplayPart implements ITerminalSettingsHost {
 
-    public static final ResourceLocation MODEL_OFF = AppEng.makeId("part/pattern_access_terminal_off");
-    public static final ResourceLocation MODEL_ON = AppEng.makeId("part/pattern_access_terminal_on");
+    // 自有 part 模型（世界渲染用）。三个 id 都必须在客户端启动时交给 AE2 的烘焙器登记
+    // （appeng.api.parts.PartModels#registerModels，见 PartModelsRegistration），
+    // 否则 AE2 的 CableBus 取不到它们，世界里的面板会直接不显示（且不会报缺失模型）。
+    // MODEL_BASE 有意遮蔽基类 AbstractDisplayPart 的同名常量（基类那份是 ae2:part/display_base）。
+    public static final ResourceLocation MODEL_BASE = new ResourceLocation(AeMonitorNet.MODID, "part/terminal_base");
+    public static final ResourceLocation MODEL_OFF = new ResourceLocation(AeMonitorNet.MODID, "part/terminal_off");
+    public static final ResourceLocation MODEL_ON = new ResourceLocation(AeMonitorNet.MODID, "part/terminal_on");
 
     public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE, MODEL_OFF, MODEL_STATUS_OFF);
     public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_ON);
