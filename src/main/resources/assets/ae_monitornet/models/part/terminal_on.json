@@ -1,8 +1,7 @@
 {
   "parent": "ae2:part/pattern_access_terminal_on",
   "textures": {
-    "lightsBright": "ae_monitornet:part/terminal_front_bright",
     "lightsMedium": "ae_monitornet:part/terminal_front_medium",
-    "lightsDark": "ae_monitornet:part/terminal_front_dark"
+    "lightsBright": "ae_monitornet:part/terminal_front_bright"
   }
 }
