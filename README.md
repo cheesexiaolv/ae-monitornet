@@ -93,10 +93,11 @@ This mod is licensed under **GNU LGPL-3.0** (see `LICENSE`).
 The ME throughput monitor parts come from
 [AdvancedAE](https://github.com/pedroksl/AdvancedAE) by Pedroksl (LGPL-3.0): the 1.20.1 build uses them
 as they are, and the 1.19.2 build is a port of the same parts. The advanced monitor's sampling history,
-the line chart, the terminals and their chart windows are this project's own work. The part-face
-textures shipped in `assets/ae_monitornet/textures/` are unmodified copies of AE2's own part textures
-and stay under AE2's LGPL-3.0 license. See `NOTICE.txt` for the full attribution list and for what is
-derived vs. original.
+the line chart, the terminals and their chart windows are this project's own work. All part and item
+faces are referenced straight out of AE2's own resources (`ae2:part/...`, `ae2:item/...`); the only
+textures this mod ships are the two terminal light layers it draws itself
+(`part/terminal_front_medium.png`, `part/terminal_front_bright.png`) plus its own configurator icon.
+See `NOTICE.txt` for the full attribution list and for what is derived vs. original.
 
 ### Note on authorship
 
@@ -174,9 +175,10 @@ Windows 上把 `./gradlew` 换成 `gradlew.bat`（例如 `gradlew.bat build --of
 
 ME 吞吐量监控器系列部件来自 [AdvancedAE](https://github.com/pedroksl/AdvancedAE)（作者 Pedroksl，
 LGPL-3.0）：1.20.1 版直接使用这些部件，1.19.2 版是同一批部件的向下移植。高级监控器的采样历史、
-折线图、终端及其曲线子窗口是本项目自己的实现。`assets/ae_monitornet/textures/` 里的部件正面贴图
-是 AE2 原贴图的逐字节副本，仍按 AE2 的 LGPL-3.0 授权。完整的署名列表、以及"哪些是移植、哪些是原创"
-的划分见 `NOTICE.txt`。
+折线图、终端及其曲线子窗口是本项目自己的实现。部件与物品的外观一律直接引用 AE2 自己的贴图
+（`ae2:part/...`、`ae2:item/...`）；本模组自带的贴图只有它自己画的两层终端高亮
+（`part/terminal_front_medium.png`、`part/terminal_front_bright.png`）和配置器图标。完整的署名列表、
+以及"哪些是移植、哪些是原创"的划分见 `NOTICE.txt`。
 
 ### 关于代码来源
 
