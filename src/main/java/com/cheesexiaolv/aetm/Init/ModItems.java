@@ -1,6 +1,6 @@
 package com.cheesexiaolv.aetm.Init;
 
-import com.cheesexiaolv.aetm.Aetm;
+import com.cheesexiaolv.aetm.AeMonitorNet;
 import com.cheesexiaolv.aetm.Items.ThroughputMonitorConfigurator;
 import com.cheesexiaolv.aetm.Items.WirelessThroughputTerminalItem;
 import com.cheesexiaolv.aetm.Parts.AdvancedThroughputMonitorPart;
@@ -15,7 +15,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public class ModItems {
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Aetm.MODID);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, AeMonitorNet.MODID);
 
     /**
      * 提供"吞吐量监控器"这一生态位的其它 mod。
@@ -45,14 +45,14 @@ public class ModItems {
     }
 
     /**
-     * 是否由 aetm 提供"基础吞吐量监控器"。
+     * 是否由 本模组 提供"基础吞吐量监控器"。
      *
      * <p>用户要求：装了对面那个 mod 时，同一个存档里<b>不能出现两个一模一样的吞吐量监控器</b>。
-     * 所以对面在场时 aetm 的 {@code throughput_monitor}：
+     * 所以对面在场时 本模组 的 {@code throughput_monitor}：
      * <ul>
      *   <li><b>仍然注册</b>（否则老存档里已经放下的零件会因为物品消失而炸）；</li>
-     *   <li>但<b>不进创造标签</b>（见 {@code Aetm.TAB} 的 displayItems）、也<b>没有配方</b>
-     *       （配方侧见 {@code data/aetm/recipes/throughput_monitor.json} 的 {@code forge:not} +
+     *   <li>但<b>不进创造标签</b>（见 {@code AeMonitorNet.TAB} 的 displayItems）、也<b>没有配方</b>
+     *       （配方侧见 {@code data/ae_monitornet/recipes/throughput_monitor.json} 的 {@code forge:not} +
      *       {@code forge:mod_loaded} 反条件）。</li>
      * </ul>
      * 对面不在场时行为与以前完全一致（进标签 + 有配方）。
@@ -113,7 +113,7 @@ public class ModItems {
     /**
      * 无线终端物品的工厂：装了 AE2WTLib 就用它的通用终端子类，否则用不依赖它的基类。
      *
-     * <p>两条路都注册在同一个 id {@code aetm:wireless_throughput_terminal} 上，
+     * <p>两条路都注册在同一个 id {@code ae_monitornet:wireless_throughput_terminal} 上，
      * 所以既有配方、既有存档里的物品都不受影响（换环境只是换了个行为更全的子类）。
      */
     private static Item createWirelessTerminal() {

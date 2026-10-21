@@ -43,7 +43,7 @@ public class WutThroughputTerminalScreen extends WirelessThroughputTerminalScree
             addToLeftToolbar(new CycleTerminalButton(btn -> cycleTerminal()));
             if (!loggedSwitchButton) {
                 loggedSwitchButton = true;
-                AELog.info("aetm: the wireless throughput terminal was opened from the universal terminal; "
+                AELog.info("AE MonitorNet: the wireless throughput terminal was opened from the universal terminal; "
                         + "the 'cycle terminal' button has been added to the left toolbar");
             }
         }

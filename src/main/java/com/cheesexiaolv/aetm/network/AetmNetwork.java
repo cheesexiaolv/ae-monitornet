@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.cheesexiaolv.aetm.Aetm;
+import com.cheesexiaolv.aetm.AeMonitorNet;
 
 import io.netty.buffer.Unpooled;
 
@@ -29,7 +29,7 @@ import net.minecraftforge.network.event.EventNetworkChannel;
  */
 public final class AetmNetwork {
 
-    private static final ResourceLocation CHANNEL_NAME = ResourceLocation.fromNamespaceAndPath(Aetm.MODID, "main");
+    private static final ResourceLocation CHANNEL_NAME = ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "main");
     private static EventNetworkChannel channel;
 
     /**

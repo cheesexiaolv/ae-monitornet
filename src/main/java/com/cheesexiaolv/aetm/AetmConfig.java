@@ -3,7 +3,7 @@ package com.cheesexiaolv.aetm;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 /**
- * aetm 配置（生成在 {@code config/aetm-common.toml}）。
+ * AE MonitorNet 配置（生成在 {@code <存档>/serverconfig/ae_monitornet-server.toml}）。
  */
 public final class AetmConfig {
 
@@ -21,7 +21,7 @@ public final class AetmConfig {
     static {
         var builder = new ForgeConfigSpec.Builder();
 
-        builder.comment("AE Throughput Monitor settings").push("throughput_monitor");
+        builder.comment("AE MonitorNet settings").push("throughput_monitor");
 
         SAMPLING_INTERVAL_TICKS = builder
                 .comment("Sampling interval in ticks (20 ticks = 1 second).",

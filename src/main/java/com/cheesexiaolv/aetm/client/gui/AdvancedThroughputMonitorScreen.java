@@ -56,28 +56,28 @@ public class AdvancedThroughputMonitorScreen extends AEBaseScreen<AdvancedThroug
         // 第一行：显示量 / 时间窗口
         this.metricButton = addRenderableWidget(new FlatButton(
                 this.leftPos + BUTTON_COL1_X, this.topPos + BUTTON_ROW1_Y, BUTTON_W, BUTTON_H,
-                Component.translatable("gui.aetm.btn.metric", metricLabel(this.menu.chartMetric)),
+                Component.translatable("gui.ae_monitornet.btn.metric", metricLabel(this.menu.chartMetric)),
                 b -> this.menu.sendCycleChartMetric()));
 
         this.windowButton = addRenderableWidget(new FlatButton(
                 this.leftPos + BUTTON_COL2_X, this.topPos + BUTTON_ROW1_Y, BUTTON_W, BUTTON_H,
-                Component.translatable("gui.aetm.btn.window", this.menu.chartWindow),
+                Component.translatable("gui.ae_monitornet.btn.window", this.menu.chartWindow),
                 b -> this.menu.sendCycleChartWindow()));
 
         // 第二行：速率档位 / 流体单位
         this.unitButton = addRenderableWidget(new FlatButton(
                 this.leftPos + BUTTON_COL1_X, this.topPos + BUTTON_ROW2_Y, BUTTON_W, BUTTON_H,
-                Component.translatable("gui.aetm.btn.unit", this.menu.rateUnit),
+                Component.translatable("gui.ae_monitornet.btn.unit", this.menu.rateUnit),
                 b -> this.menu.sendCycleRoutine()));
 
         this.fluidUnitButton = addRenderableWidget(new FlatButton(
                 this.leftPos + BUTTON_COL2_X, this.topPos + BUTTON_ROW2_Y, BUTTON_W, BUTTON_H,
-                Component.translatable("gui.aetm.btn.fluid", this.menu.fluidUnitB ? "B" : "mB"),
+                Component.translatable("gui.ae_monitornet.btn.fluid", this.menu.fluidUnitB ? "B" : "mB"),
                 b -> this.menu.sendToggleFluidUnit()));
     }
 
     private static Component metricLabel(int ordinal) {
-        return Component.translatable("gui.aetm.metric."
+        return Component.translatable("gui.ae_monitornet.metric."
                 + ThroughputHistory.Metric.byOrdinal(ordinal).key);
     }
 
@@ -86,7 +86,7 @@ public class AdvancedThroughputMonitorScreen extends AEBaseScreen<AdvancedThroug
             float partialTicks) {
         super.drawBG(guiGraphics, offsetX, offsetY, mouseX, mouseY, partialTicks);
 
-        // 面板底、槽框、图表凹槽都已烘进贴图（aetm_monitor.png），这里只画曲线
+        // 面板底、槽框、图表凹槽都已烘进贴图（ae_monitornet_monitor.png），这里只画曲线
         ThroughputChart.draw(guiGraphics, this.font,
                 offsetX + CHART_X, offsetY + CHART_Y, CHART_W, CHART_H,
                 this.chartSeries, this.menu.chartWindowSeconds, chartUnit(),
@@ -113,27 +113,27 @@ public class AdvancedThroughputMonitorScreen extends AEBaseScreen<AdvancedThroug
         }
 
         var watchedName = this.menu.displayedItemName.isEmpty()
-                ? Component.translatable("gui.aetm.none")
+                ? Component.translatable("gui.ae_monitornet.none")
                 : Component.literal(this.menu.displayedItemName);
-        this.setTextContent("watched_text", Component.translatable("gui.aetm.watched", watchedName));
-        this.setTextContent("amount_text", Component.translatable("gui.aetm.amount", this.menu.amountText));
+        this.setTextContent("watched_text", Component.translatable("gui.ae_monitornet.watched", watchedName));
+        this.setTextContent("amount_text", Component.translatable("gui.ae_monitornet.amount", this.menu.amountText));
         this.setTextContent("rate_text",
-                Component.translatable("gui.aetm.rate", this.menu.rateText + this.menu.rateUnit));
+                Component.translatable("gui.ae_monitornet.rate", this.menu.rateText + this.menu.rateUnit));
 
         if (this.windowButton != null) {
-            this.windowButton.setMessage(Component.translatable("gui.aetm.btn.window", this.menu.chartWindow));
+            this.windowButton.setMessage(Component.translatable("gui.ae_monitornet.btn.window", this.menu.chartWindow));
         }
         if (this.metricButton != null) {
             this.metricButton.setMessage(
-                    Component.translatable("gui.aetm.btn.metric", metricLabel(this.menu.chartMetric)));
+                    Component.translatable("gui.ae_monitornet.btn.metric", metricLabel(this.menu.chartMetric)));
         }
         if (this.unitButton != null) {
-            this.unitButton.setMessage(Component.translatable("gui.aetm.btn.unit", this.menu.rateUnit));
+            this.unitButton.setMessage(Component.translatable("gui.ae_monitornet.btn.unit", this.menu.rateUnit));
         }
         if (this.fluidUnitButton != null) {
             this.fluidUnitButton.visible = this.menu.fluidDisplayed;
             this.fluidUnitButton.setMessage(
-                    Component.translatable("gui.aetm.btn.fluid", this.menu.fluidUnitB ? "B" : "mB"));
+                    Component.translatable("gui.ae_monitornet.btn.fluid", this.menu.fluidUnitB ? "B" : "mB"));
         }
     }
 }

@@ -1,0 +1,9 @@
+{
+  "parent": "ae2:item/display_base",
+  "textures": {
+    "front": "ae_monitornet:part/monitor_front",
+    "front_bright": "ae_monitornet:part/monitor_front_bright",
+    "front_medium": "ae_monitornet:part/monitor_front_medium",
+    "front_dark": "ae_monitornet:part/monitor_front_dark"
+  }
+}

@@ -94,7 +94,7 @@ public final class AE2WtLibHook {
             HotkeyActions.register(new Ae2WTLibLocatingService(TERMINAL_ID), HOTKEY_ID);
         } catch (Throwable t) {
             // 窗口没赶上不算致命：registerTerminal() 还有 reserveHotkeySlotOnly() 的兜底。
-            AELog.info("aetm: could not reserve hotkey id '%s' early (%s: %s); the terminal will still be "
+            AELog.info("AE MonitorNet: could not reserve hotkey id '%s' early (%s: %s); the terminal will still be "
                             + "registered, but it may end up without a dedicated keybind",
                     HOTKEY_ID, t.getClass().getSimpleName(), t.getMessage());
         }
@@ -110,18 +110,18 @@ public final class AE2WtLibHook {
             // AE2 15.x 的 AELog 删掉了 log(Level, Throwable, String, Object...)，
             // 带异常的重载只剩 error(Throwable, String)（不带格式参数）。
             AELog.error(t,
-                    "aetm: registering the wireless throughput terminal into AE2WTLib failed");
+                    "AE MonitorNet: registering the wireless throughput terminal into AE2WTLib failed");
         }
 
         try {
             ensureLinkable(item);
         } catch (Throwable t) {
-            AELog.error(t, String.format("aetm: %s could not be registered as grid-linkable; "
+            AELog.error(t, String.format("AE MonitorNet: %s could not be registered as grid-linkable; "
                     + "it will not be bindable through the security terminal", item.getDescriptionId()));
         }
 
         if (!registeredForOurItem(item)) {
-            AELog.warn("aetm: the wireless throughput terminal was not registered into AE2WTLib's universal "
+            AELog.warn("AE MonitorNet: the wireless throughput terminal was not registered into AE2WTLib's universal "
                     + "terminal (looking for terminal id '%s'); it will not be selectable there and the "
                     + "ae2wtlib upgrade/combine recipes for it will not load", TERMINAL_ID);
         }
@@ -131,7 +131,7 @@ public final class AE2WtLibHook {
         // AELog 走的是 String.format，占位符是 %s（不是 log4j 的 {}）。
         var handler = GridLinkables.get(item);
         var probe = new ItemStack(item);
-        AELog.info("aetm: %s -> in universal terminal: %s, linkable in security terminal: %s (canLink: %s), keybind: %s",
+        AELog.info("AE MonitorNet: %s -> in universal terminal: %s, linkable in security terminal: %s (canLink: %s), keybind: %s",
                 item.getDescriptionId(),
                 registeredForOurItem(item),
                 handler != null, handler != null && handler.canLink(probe),
@@ -145,7 +145,7 @@ public final class AE2WtLibHook {
 
         if (!(item instanceof IUniversalWirelessTerminalItem universal)) {
             // 这条以前是静默 return，结果"融合配方解析不了"查半天查不出原因。
-            AELog.warn("aetm: {} is not an IUniversalWirelessTerminalItem (it should be created by "
+            AELog.warn("AE MonitorNet: {} is not an IUniversalWirelessTerminalItem (it should be created by "
                     + "ModItems.createWirelessTerminal() when ae2wtlib is present); skipping WUT registration",
                     item.getDescriptionId());
             return;
@@ -154,7 +154,7 @@ public final class AE2WtLibHook {
         if (WUTHandler.terminalNames.contains(TERMINAL_ID)) {
             // 终端 id 已被别人（另一个附属）占用 —— 不覆盖对方，只明确报出来。
             // 不做"给某个 mod 写硬编码兼容"：id 与 data/ 里的 terminalName 是绑死的，不能临时改名。
-            AELog.warn("aetm: terminal id '%s' is already taken by another terminal (%s); not overwriting it. "
+            AELog.warn("AE MonitorNet: terminal id '%s' is already taken by another terminal (%s); not overwriting it. "
                             + "Our wireless throughput terminal will not be selectable in the universal terminal "
                             + "until the id conflict is resolved",
                     TERMINAL_ID, WUTHandler.wirelessTerminals.get(TERMINAL_ID));
@@ -165,7 +165,7 @@ public final class AE2WtLibHook {
             addTerminal(universal);
             return;
         } catch (Throwable t) {
-            AELog.info("aetm: AE2WTLib's addTerminal() for terminal '%s' threw %s: %s; reserving the hotkey id "
+            AELog.info("AE MonitorNet: AE2WTLib's addTerminal() for terminal '%s' threw %s: %s; reserving the hotkey id "
                             + "in AE2's hotkey action table (no keybind) and retrying once",
                     TERMINAL_ID, t.getClass().getSimpleName(), t.getMessage());
         }
@@ -174,7 +174,7 @@ public final class AE2WtLibHook {
         try {
             addTerminal(universal);
         } catch (Throwable t) {
-            AELog.error(t, "aetm: registering the wireless throughput terminal into AE2WTLib failed "
+            AELog.error(t, "AE MonitorNet: registering the wireless throughput terminal into AE2WTLib failed "
                     + "even after reserving the hotkey id; it will not be selectable in the universal terminal "
                     + "and its upgrade/combine recipes will not load");
         }
@@ -198,7 +198,7 @@ public final class AE2WtLibHook {
                 ThroughputTerminalWirelessMenuHost::new,
                 ThroughputTerminalWirelessMenu.TYPE,
                 universal,
-                "item.aetm.wireless_throughput_terminal");
+                "item.ae_monitornet.wireless_throughput_terminal");
     }
 
     /**

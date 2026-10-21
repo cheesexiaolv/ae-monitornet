@@ -3,7 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
-    // aetm does not use Mixin (AE2 compat is done with a reflection soft-bridge), so the
+    // This mod does not use Mixin (AE2 compat is done with a reflection soft-bridge), so the
     // MixinGradle plugin is intentionally absent. Add it back only if a mixin config shows up.
 }
 

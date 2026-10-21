@@ -2,7 +2,7 @@
   "$schema": "schema.json",
   "includes": ["common/common.json", "common/player_inventory.json"],
   "background": {
-    "texture": "guis/aetm_monitor.png",
+    "texture": "guis/ae_monitornet_monitor.png",
     "textureWidth": 176,
     "textureHeight": 270,
     "srcRect": [0, 0, 176, 270]
@@ -16,7 +16,7 @@
   "text": {
     "dialog_title": {
       "text": {
-        "translate": "item.aetm.advanced_throughput_monitor"
+        "translate": "item.ae_monitornet.advanced_throughput_monitor"
       },
       "position": {
         "left": 8,
@@ -25,7 +25,7 @@
     },
     "watched_text": {
       "text": {
-        "translate": "gui.aetm.watched"
+        "translate": "gui.ae_monitornet.watched"
       },
       "position": {
         "left": 46,
@@ -34,7 +34,7 @@
     },
     "amount_text": {
       "text": {
-        "translate": "gui.aetm.amount"
+        "translate": "gui.ae_monitornet.amount"
       },
       "position": {
         "left": 46,
@@ -43,7 +43,7 @@
     },
     "rate_text": {
       "text": {
-        "translate": "gui.aetm.rate"
+        "translate": "gui.ae_monitornet.rate"
       },
       "position": {
         "left": 46,

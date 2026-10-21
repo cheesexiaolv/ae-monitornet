@@ -33,7 +33,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
  * {@code appeng.init.client.InitScreens}，签名未变：{@code (MenuType<M>, StyledScreenFactory, String)}），
  * 时机仍是 {@code FMLClientSetupEvent#enqueueWork}——与 1.19.2 完全一致。
  */
-@Mod.EventBusSubscriber(modid = Aetm.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = AeMonitorNet.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientEvents {
 
     @SubscribeEvent
@@ -50,7 +50,7 @@ public class ClientEvents {
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             // 自建通道的客户端收包入口（行数据 → 当前打开的菜单；「定位」高亮 → 静态的 ClientHighlights）。
-            // 通道本身在 Aetm 构造器里建立，这里只把"客户端做什么"接上去，网络类因此不必 import 客户端类型。
+            // 通道本身在 AeMonitorNet 构造器里建立，这里只把"客户端做什么"接上去，网络类因此不必 import 客户端类型。
             AetmNetwork.setClientHandler(TerminalClientPackets::handle);
 
             InitScreens.register(

@@ -37,9 +37,9 @@ import appeng.parts.reporting.AbstractMonitorPart;
  *       （AAE 源码第 61 行；1.19.2 时代的 aebackports 是 {@code protected float}，这里按
  *       {@link Number} 读，两种都能用）；</li>
  *   <li>读它的 {@code private WorkRoutine workRoutine} 枚举字段（源码第 63 行）拿 {@code ordinal()}
- *       当档位号 —— 它的枚举顺序 0=t 1=s 2=m 3=10m 与 aetm 的 {@code WorkRoutine} /
+ *       当档位号 —— 它的枚举顺序 0=t 1=s 2=m 3=10m 与 本模组 的 {@code WorkRoutine} /
  *       {@code TerminalSettings} 完全一致；</li>
- *   <li>调它的 {@code onPartActivate(player, hand, pos)} 来切档位（供 aetm 的配置器使用）。</li>
+ *   <li>调它的 {@code onPartActivate(player, hand, pos)} 来切档位（供 本模组 的配置器使用）。</li>
  * </ol>
  *
  * <p>三处都在 try/catch 里：AAE 以后改了实现，最坏情况是"这个零件读不到/切不动"，
@@ -113,7 +113,7 @@ final class AaeMonitorRef implements IMonitorRef {
 
     @Override
     public double lastReportedValue() {
-        // AAE 是 double（1.19.2 的 aebackports 是 float）；语义与 aetm 的 getLastReportedValue() 相同
+        // AAE 是 double（1.19.2 的 aebackports 是 float）；语义与 本模组 的 getLastReportedValue() 相同
         Field field = resolveField(this.part.getClass(), LAST_VALUE_FIELD);
         if (field == null) {
             return 0;
@@ -168,11 +168,11 @@ final class AaeMonitorRef implements IMonitorRef {
             return false;
         }
         try {
-            // 它的 onPartActivate 里认它自己的配置器、然后 cycle 档位（与 aetm 的实现同构）
+            // 它的 onPartActivate 里认它自己的配置器、然后 cycle 档位（与 本模组 的实现同构）
             Object result = method.invoke(this.part, player, hand, clickLocation);
             return result instanceof Boolean changed && changed;
         } catch (ReflectiveOperationException | RuntimeException e) {
-            AELog.warn("aetm: failed to cycle the AdvancedAE throughput monitor routine", e);
+            AELog.warn("AE MonitorNet: failed to cycle the AdvancedAE throughput monitor routine", e);
             return false;
         }
     }
@@ -205,7 +205,7 @@ final class AaeMonitorRef implements IMonitorRef {
             // public 方法（基类 AbstractMonitorPart 声明），getMethod 会沿父类链找到
             return partClass.getMethod("onPartActivate", Player.class, InteractionHand.class, Vec3.class);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            AELog.warn("aetm: the AdvancedAE part is present but onPartActivate is unavailable", e);
+            AELog.warn("AE MonitorNet: the AdvancedAE part is present but onPartActivate is unavailable", e);
             return null;
         }
     }

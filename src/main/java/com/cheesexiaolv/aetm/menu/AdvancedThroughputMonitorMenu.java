@@ -24,7 +24,7 @@ public class AdvancedThroughputMonitorMenu extends AEBaseMenu {
 
     public static final MenuType<AdvancedThroughputMonitorMenu> TYPE = MenuTypeBuilder
             .create(AdvancedThroughputMonitorMenu::new, IAdvancedThroughputMonitorHost.class)
-            .withMenuTitle(host -> Component.translatable("item.aetm.advanced_throughput_monitor"))
+            .withMenuTitle(host -> Component.translatable("item.ae_monitornet.advanced_throughput_monitor"))
             .build("advanced_throughput_monitor");
 
     @GuiSync(1)

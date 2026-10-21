@@ -2,7 +2,7 @@ package com.cheesexiaolv.aetm.client;
 
 import javax.annotation.Nullable;
 
-import com.cheesexiaolv.aetm.Aetm;
+import com.cheesexiaolv.aetm.AeMonitorNet;
 import com.cheesexiaolv.aetm.network.TerminalRowsPacket;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -41,7 +41,7 @@ import net.minecraftforge.fml.common.Mod;
  * "关掉终端 → 高亮立刻消失"。放静态字段后，关掉界面高亮会<b>继续存在到期</b>，
  * 玩家可以边走边找那台机器。到期用 {@code level.getGameTime()} 判断，不需要"取消高亮"包。
  */
-@Mod.EventBusSubscriber(modid = Aetm.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = AeMonitorNet.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientHighlights {
 
     /** 描边颜色（纯红）：与 ExtendedAE 的 {@code ColorData.RED = (1, 0, 0)} 完全一致。 */

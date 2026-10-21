@@ -11,7 +11,7 @@ import net.minecraftforge.fml.ModList;
 import appeng.parts.reporting.AbstractMonitorPart;
 
 /**
- * <b>aetm ↔ AdvancedAE（AAE）的兼容桥入口</b>：把"别人家的吞吐量监控器零件"包成 {@link IMonitorRef}。
+ * <b>本模组 ↔ AdvancedAE（AAE）的兼容桥入口</b>：把"别人家的吞吐量监控器零件"包成 {@link IMonitorRef}。
  *
  * <p>设计要点（两个 mod 同时装、同一存档里两边的监控器都要能在终端里看到）：
  * <ul>
@@ -47,7 +47,7 @@ public final class MonitorRefs {
         return false;
     }
 
-    /** 档位 → tick 数（与 aetm 自己的 {@code WorkRoutine} / {@code ThroughputTerminalPart.ROUTINE_TICKS} 一致）。 */
+    /** 档位 → tick 数（与 本模组 自己的 {@code WorkRoutine} / {@code ThroughputTerminalPart.ROUTINE_TICKS} 一致）。 */
     static final int[] ROUTINE_TICKS = { 1, 20, 1200, 12000 };
 
     /** 对面部件类（惰性解析；空列表 = 没装 / 全部解析失败）。 */
@@ -64,7 +64,7 @@ public final class MonitorRefs {
     /**
      * 把零件包成 {@link IMonitorRef}。
      *
-     * @param part 一个零件实例（aetm 的、或 AdvancedAE 的；其它类型返回 null）
+     * @param part 一个零件实例（本模组 的、或 AdvancedAE 的；其它类型返回 null）
      * @return 包装对象；不认识该类型、或 AAE 侧不可用时返回 {@code null}
      */
     @Nullable
@@ -96,7 +96,7 @@ public final class MonitorRefs {
         return isProviderPart(part);
     }
 
-    /** 该 {@code machineClass} 是不是（aetm 或对面的）吞吐量监控器。 */
+    /** 该 {@code machineClass} 是不是（本模组 或对面的）吞吐量监控器。 */
     public static boolean isMonitorClass(Class<?> machineClass) {
         if (ThroughputMonitorPart.class.isAssignableFrom(machineClass)) {
             return true;
@@ -129,7 +129,7 @@ public final class MonitorRefs {
             if (isProviderLoaded()) {
                 providerPartClasses = AaeMonitorRef.resolvePartClasses();
                 if (providerPartClasses.isEmpty()) {
-                    appeng.core.AELog.warn("aetm: an addon providing a throughput monitor ({}) is loaded but its "
+                    appeng.core.AELog.warn("AE MonitorNet: an addon providing a throughput monitor ({}) is loaded but its "
                             + "throughput monitor part could not be resolved; its monitors will not show up in the "
                             + "terminal", String.join(" / ", PROVIDER_MODIDS));
                 }

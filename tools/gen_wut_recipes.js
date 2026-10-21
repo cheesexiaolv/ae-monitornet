@@ -6,12 +6,12 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA = path.join(__dirname, '..', 'src', 'main', 'resources', 'data', 'aetm');
+const DATA = path.join(__dirname, '..', 'src', 'main', 'resources', 'data', 'ae_monitornet');
 const RECIPE_DIR = path.join(DATA, 'recipes', 'wireless_universal_terminal');
 const ADV_DIR = path.join(DATA, 'advancements', 'recipes', 'wireless_universal_terminal');
 
 // 本模组注册进 WUT 的无线终端（id 必须与 AE2WtLibHook.TERMINAL_ID 一致）
-const OURS = { name: 'throughput', item: 'aetm:wireless_throughput_terminal', key: 'throughput' };
+const OURS = { name: 'throughput', item: 'ae_monitornet:wireless_throughput_terminal', key: 'throughput' };
 
 // AE2 / AE2WTLib 自带的无线终端
 const OTHERS = [
@@ -33,12 +33,12 @@ const conditional = (recipe) => ({
 
 const advancement = (id, criteria, requirements) => ({
   parent: 'minecraft:recipes/root',
-  rewards: { recipes: [`aetm:wireless_universal_terminal/${id}`] },
+  rewards: { recipes: [`ae_monitornet:wireless_universal_terminal/${id}`] },
   criteria: {
     ...criteria,
     has_the_recipe: {
       trigger: 'minecraft:recipe_unlocked',
-      conditions: { recipe: `aetm:wireless_universal_terminal/${id}` },
+      conditions: { recipe: `ae_monitornet:wireless_universal_terminal/${id}` },
     },
   },
   requirements: [requirements],

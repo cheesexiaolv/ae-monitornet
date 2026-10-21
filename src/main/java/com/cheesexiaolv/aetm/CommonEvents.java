@@ -31,7 +31,7 @@ import appeng.items.tools.powered.WirelessTerminalItem;
  * AE2 会在 BLOCK 阶段把队列冲刷掉，这里再注册就会 "Adding duplicate key"。
  * 所以下面先 {@code containsKey} 再注册 —— 只在 AE2 没管过的时候补一刀。
  */
-@Mod.EventBusSubscriber(modid = Aetm.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = AeMonitorNet.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class CommonEvents {
 
     @SubscribeEvent
