@@ -17,6 +17,11 @@ import java.util.Locale;
  * 这种一步巨变如果照常参与差分，就会产生一个"假尖峰"，并且会在历史窗口里赖着把纵轴撑爆。
  * 因此这里识别两类不连续（从 0 起跳、单步超过典型步长的 {@value #JUMP_FACTOR} 倍）并标记该步，
  * 计算速率时跨过这类边界（沿用上一点的值）。
+ *
+ * <p>⚠️ <b>只拒收一步</b>：被判成跳变的那一步会拒收，但"连续第二步仍然这么大"就说明这是新常态
+ * （换机器、插加速卡、堆叠增产……），必须认下来并用它重建典型步长。旧实现只拒收、不更新典型步长，
+ * 于是速率一旦跳变就<b>永远</b>跨不过去 —— 流速曲线冻在跳变前的值上（实测：速率 2400 mB/t 时
+ * 图表还停在 25，Y 轴 28/14/0），插满加速卡与不插看不出区别。储量路径不受影响（它不做差分）。
  */
 public final class ThroughputHistory {
 
@@ -89,6 +94,8 @@ public final class ThroughputHistory {
     private long lastAmount;
     /** |Δ存量| 的指数滑动平均，代表"典型步长"。 */
     private double typicalStep;
+    /** 连续被判成"跳变"的步数：≥1 时的下一步当作新常态认下来（见类注释）。 */
+    private int rejectStreak;
     private boolean hasLast;
 
     public ThroughputHistory(int capacity) {
@@ -103,17 +110,23 @@ public final class ThroughputHistory {
         boolean ok = true;
         if (this.hasLast) {
             long step = Math.abs(amount - this.lastAmount);
-            if (this.lastAmount == 0L && amount != 0L) {
-                // 从 0 起跳：多为存档加载/存储未就绪，不是真实流量
-                ok = false;
-            } else if (this.typicalStep > 0.0 && step > JUMP_FACTOR * this.typicalStep) {
-                // 离群跳变
-                ok = false;
-            }
-            if (ok) {
+            boolean jump = (this.lastAmount == 0L && amount != 0L)          // 从 0 起跳：读档/存储未就绪
+                    || (this.typicalStep > 0.0 && step > JUMP_FACTOR * this.typicalStep);  // 离群跳变
+            if (jump) {
+                if (this.rejectStreak >= 1) {
+                    // 连续两步都这么大 → 这是新常态，不是假尖峰：认下来并用它重建典型步长
+                    this.typicalStep = step;
+                    this.rejectStreak = 0;
+                } else {
+                    // 第一步先拒收（挡住读档/切维度的假尖峰），下一步再判
+                    this.rejectStreak++;
+                    ok = false;
+                }
+            } else {
                 this.typicalStep = this.typicalStep <= 0.0
                         ? step
                         : this.typicalStep * 0.9 + step * 0.1;
+                this.rejectStreak = 0;
             }
         }
 
@@ -134,6 +147,7 @@ public final class ThroughputHistory {
         this.next = 0;
         this.lastAmount = 0L;
         this.typicalStep = 0.0;
+        this.rejectStreak = 0;
         this.hasLast = false;
     }
 

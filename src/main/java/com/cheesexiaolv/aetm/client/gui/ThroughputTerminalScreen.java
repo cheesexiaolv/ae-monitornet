@@ -487,17 +487,8 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
 
     /** 紧凑数值：1.2G / 45M / 302.2K / 1234（避免大数字把列撑爆）。 */
     private static String compact(double value) {
-        double abs = Math.abs(value);
-        if (abs >= 1.0e9) {
-            return String.format(Locale.ENGLISH, "%.1fG", value / 1.0e9);
-        }
-        if (abs >= 1.0e6) {
-            return String.format(Locale.ENGLISH, "%.1fM", value / 1.0e6);
-        }
-        if (abs >= 1.0e4) {
-            return String.format(Locale.ENGLISH, "%.1fK", value / 1.0e3);
-        }
-        return String.format(Locale.ENGLISH, "%,.0f", value);
+        // 格式化只有一处实现（与折线图共用 ChartMath），列宽相关的阈值/小数位保持不变
+        return ChartMath.formatCompact(value);
     }
 
     // ------------------------------------------------------------------
@@ -597,6 +588,17 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
      */
     ThroughputHistory.Series seriesFor(int rowIndex) {
         return this.menu.seriesFor(rowIndex);
+    }
+
+    /**
+     * 子窗口图表的悬停上下文。
+     *
+     * <p>子窗口里的图表用的是<b>面板相对坐标</b>，而浮窗要夹在<b>屏幕</b>内（子窗口可以被拖到面板外），
+     * 所以把屏幕尺寸与面板原点一起交给 {@link ThroughputChart}。
+     */
+    ThroughputChart.Hover hoverContext(int relativeMouseX, int relativeMouseY) {
+        return new ThroughputChart.Hover(relativeMouseX, relativeMouseY, this.width, this.height,
+                this.leftPos, this.topPos);
     }
 
     /** 向服务端索取某一行的曲线（服务端会用该行自己的设置现算一份回发）。 */

@@ -84,10 +84,14 @@ public class AdvancedThroughputMonitorScreen extends AEBaseScreen<AdvancedThroug
         super.drawBG(poseStack, offsetX, offsetY, mouseX, mouseY, partialTicks);
 
         // 面板底、槽框、图表凹槽都已烘进贴图（ae_monitornet_monitor.png），这里只画曲线
+        //
+        // ⚠️ drawBG 里的坐标是**屏幕绝对坐标**（vanilla 在 renderBg 之后才把 pose 平移到面板左上角），
+        //    所以鼠标也是绝对的，悬停上下文不需要额外偏移。
         ThroughputChart.draw(poseStack, this.font,
                 offsetX + CHART_X, offsetY + CHART_Y, CHART_W, CHART_H,
                 this.chartSeries, this.menu.chartWindowSeconds, chartUnit(),
-                ThroughputHistory.Metric.byOrdinal(this.menu.chartMetric) != ThroughputHistory.Metric.AMOUNT);
+                ThroughputHistory.Metric.byOrdinal(this.menu.chartMetric) != ThroughputHistory.Metric.AMOUNT,
+                new ThroughputChart.Hover(mouseX, mouseY, this.width, this.height, 0, 0));
     }
 
     /** 纵轴单位：数值单位（由 key 类型推导）+ 档位单位；加速度再除以秒。 */

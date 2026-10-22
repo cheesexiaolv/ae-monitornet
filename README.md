@@ -37,7 +37,7 @@ versions: **1.19.2 (Forge 43)** and **1.20.1 (Forge 47)**.
 | Item | Description |
 |---|---|
 | **ME Throughput Monitor** | A cable part that watches one item/fluid in the network and shows icon + amount + rate on its face. The rate unit cycles per tick / second / minute / 10 minutes (with the configurator or from its GUI). |
-| **Advanced ME Throughput Monitor** | The same part, plus an in-GUI configuration slot, a sampling history and a line chart (storage / flow / acceleration) with a selectable time window. |
+| **Advanced ME Throughput Monitor** | The same part, plus an in-GUI configuration slot, a sampling history and a line chart (storage / flow / acceleration) with a selectable time window. Hover the plot for a crosshair that snaps to the nearest sample and shows that sample's value and how long ago it was taken. |
 | **ME Storage Monitor Terminal** | A cable part that lists **every throughput monitor on its network**, merges monitors that watch the same key into one row, and opens **draggable per-target chart windows** (display slot + chart + per-window metric/unit buttons + a "locate" highlight in the world). |
 | **Wireless ME Storage Monitor Terminal** | The same terminal as an AE2 wireless terminal: link it in a Security Terminal and use it inside a Wireless Access Point's range. |
 | **Throughput Monitor Configurator** | A hand-held tool: right-click a monitor to cycle its rate tier without opening any GUI. |
@@ -130,7 +130,7 @@ This mod used to be called **AE Throughput Monitor** (mod id `aetm`) and is now 
 | 物品 | 说明 |
 |---|---|
 | **ME 吞吐量监控器** | 线缆部件：监控网络中某一种物品/流体，在部件表面显示图标 + 存量 + 速率。速率单位用配置器或界面按钮循环切换（每 tick / 每秒 / 每分钟 / 每 10 分钟）。 |
-| **高级 ME 吞吐量监控器** | 同上，另带界面内配置槽、采样历史，以及可选时间窗口的折线图（存量 / 流量 / 加速度）。 |
+| **高级 ME 吞吐量监控器** | 同上，另带界面内配置槽、采样历史，以及可选时间窗口的折线图（存量 / 流量 / 加速度）。鼠标停在曲线上会出现十字准线：吸附到最近的采样点，并显示该点的数值与"多久以前"。 |
 | **存储监控终端** | 线缆部件：列出**同一网络上所有吞吐量监控器**，把监控同一对象的多个监控器合并成一行，并为每行打开**可拖动的独立曲线子窗口**（显示槽 + 折线图 + 每个窗口独立的指标/单位按钮 +「定位」世界里高亮）。 |
 | **无线存储监控终端** | 与上面相同的终端，但做成 AE2 无线终端：在安全终端里链接，待在无线访问点范围内使用。 |
 | **吞吐量监控配置器** | 手持工具：右键监控器即可循环切换速率档位，不用打开任何界面。 |
