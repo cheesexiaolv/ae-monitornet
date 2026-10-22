@@ -3,35 +3,40 @@ package com.cheesexiaolv.aetm.Logic;
 import java.util.Locale;
 
 /**
- * 吞吐量历史缓冲（服务端采样，客户端画图）。
+ * Throughput history buffer (server samples, client draws).
  *
- * <p>每个样本记录 <b>存量</b>、<b>距上一样本的 tick 数</b>，以及<b>本步是否连续</b>。
- * 由这些可以推导三种显示量：
+ * <p>Each sample records the <b>stored amount</b>, the <b>tick delta</b> since the previous
+ * sample and whether the step is <b>continuous</b>. From those we derive three display metrics:
  * <ul>
- *   <li>{@link Metric#AMOUNT} 储量：直接是存量</li>
- *   <li>{@link Metric#RATE} 流速：Δ存量 / Δ秒（换算到当前档位周期）</li>
- *   <li>{@link Metric#ACCELERATION} 流速加速度：Δ流速 / Δ秒</li>
+ *   <li>{@link Metric#AMOUNT} storage: the raw amount</li>
+ *   <li>{@link Metric#RATE} flow: delta amount / delta seconds (scaled to the current routine)</li>
+ *   <li>{@link Metric#ACCELERATION} flow acceleration: delta rate / delta seconds</li>
  * </ul>
  *
- * <p><b>不连续检测</b>：进存档/切维度时网络存储尚未加载完，存量会从 0 一下跳到真实值；
- * 这种一步巨变如果照常参与差分，就会产生一个"假尖峰"，并且会在历史窗口里赖着把纵轴撑爆。
- * 因此这里识别两类不连续（从 0 起跳、单步超过典型步长的 {@value #JUMP_FACTOR} 倍）并标记该步，
- * 计算速率时跨过这类边界（沿用上一点的值）。
+ * <p><b>Discontinuity detection</b>: when entering a world or changing dimension the grid storage
+ * is not ready yet, so the amount jumps from 0 to its real value. If such a step took part in the
+ * difference normally it would produce a phantom spike and blow up the Y axis for the whole
+ * window. Two kinds of discontinuity are recognised (jump from 0, or a single step larger than
+ * {@value #JUMP_FACTOR} times the typical step) and the step is marked, so rate calculations skip
+ * across it (reusing the previous value).
  *
- * <p>⚠️ <b>只拒收一步</b>：被判成跳变的那一步会拒收，但"连续第二步仍然这么大"就说明这是新常态
- * （换机器、插加速卡、堆叠增产……），必须认下来并用它重建典型步长。旧实现只拒收、不更新典型步长，
- * 于是速率一旦跳变就<b>永远</b>跨不过去 —— 流速曲线冻在跳变前的值上（实测：速率 2400 mB/t 时
- * 图表还停在 25，Y 轴 28/14/0），插满加速卡与不插看不出区别。储量路径不受影响（它不做差分）。
+ * <p>⚠️ <b>Only one step is rejected</b>: the step judged as a jump is dropped, but if the next
+ * step is just as large, that is the new normal (new machine, more acceleration cards, stacking
+ * upgrades ...) and it must be accepted, rebuilding the typical step. The old implementation only
+ * rejected and never updated the typical step, so after a rate jump it could <b>never</b> cross it
+ * and the flow curve froze at the pre-jump value.
+ *
+ * <p>1.21.1 port: no changes — plain Java, no Minecraft/AE2 imports.
  */
 public final class ThroughputHistory {
 
-    /** 图表最多绘制的点数（超出则分桶平均）。 */
+    /** Maximum number of points drawn (bucketed average beyond that). */
     public static final int MAX_POINTS = 120;
 
-    /** 单步变化超过"典型步长"的这个倍数，就视为不连续跳变。 */
+    /** A single step larger than this multiple of the typical step is treated as discontinuous. */
     private static final double JUMP_FACTOR = 20.0;
 
-    /** 图表时间窗口。 */
+    /** Chart time window. */
     public enum Window {
 
         S10("10s", 10),
@@ -58,14 +63,14 @@ public final class ThroughputHistory {
         }
     }
 
-    /** 图表显示的量。 */
+    /** Metric shown on the chart. */
     public enum Metric {
 
         AMOUNT("storage"),
         RATE("flow"),
         ACCELERATION("accel");
 
-        /** 语言键后缀：gui.ae_monitornet.metric.&lt;key&gt; */
+        /** Language key suffix: gui.ae_monitornet.metric.&lt;key&gt; */
         public final String key;
 
         Metric(String key) {
@@ -90,11 +95,11 @@ public final class ThroughputHistory {
     private int count;
     private int next;
 
-    /** 上一个样本的存量（用于判断不连续）。 */
+    /** Amount of the previous sample (used for the discontinuity test). */
     private long lastAmount;
-    /** |Δ存量| 的指数滑动平均，代表"典型步长"。 */
+    /** Exponential moving average of |delta amount|, the "typical step". */
     private double typicalStep;
-    /** 连续被判成"跳变"的步数：≥1 时的下一步当作新常态认下来（见类注释）。 */
+    /** Consecutive steps judged as jumps: from 1 on, the next one is accepted as the new normal. */
     private int rejectStreak;
     private boolean hasLast;
 
@@ -105,20 +110,20 @@ public final class ThroughputHistory {
         this.continuous = new boolean[capacity];
     }
 
-    /** 推入一个样本（存量 + 距上一样本的 tick 数）。 */
+    /** Push a sample (stored amount + tick delta since the previous sample). */
     public void push(long amount, int deltaTicks) {
         boolean ok = true;
         if (this.hasLast) {
             long step = Math.abs(amount - this.lastAmount);
-            boolean jump = (this.lastAmount == 0L && amount != 0L)          // 从 0 起跳：读档/存储未就绪
-                    || (this.typicalStep > 0.0 && step > JUMP_FACTOR * this.typicalStep);  // 离群跳变
+            boolean jump = (this.lastAmount == 0L && amount != 0L)          // jump from 0: load/dimension change
+                    || (this.typicalStep > 0.0 && step > JUMP_FACTOR * this.typicalStep);  // outlier jump
             if (jump) {
                 if (this.rejectStreak >= 1) {
-                    // 连续两步都这么大 → 这是新常态，不是假尖峰：认下来并用它重建典型步长
+                    // Two consecutive large steps -> new normal, not a phantom spike
                     this.typicalStep = step;
                     this.rejectStreak = 0;
                 } else {
-                    // 第一步先拒收（挡住读档/切维度的假尖峰），下一步再判
+                    // Reject the first one (blocks load/dimension spikes), judge the next one
                     this.rejectStreak++;
                     ok = false;
                 }
@@ -155,20 +160,20 @@ public final class ThroughputHistory {
         return this.count;
     }
 
-    /** 图表数据：值序列 + 实际覆盖的秒数（不满窗口时用来把曲线右对齐）。 */
+    /** Chart data: value series + actual covered seconds (right-aligns a partially filled window). */
     public record Series(float[] values, double spanSeconds) {
 
         public static final Series EMPTY = new Series(new float[0], 0);
     }
 
-    /** 生成图表用的数值序列（按窗口裁剪 + 降采样）。routineTicks 让"流速"与读数同单位。 */
+    /** Build the chart series (window clipping + downsampling). routineTicks matches the readout unit. */
     public Series series(Window window, Metric metric, int routineTicks) {
         int n = this.count;
         if (n < 2) {
             return Series.EMPTY;
         }
 
-        // 前向计算每个样本的显示值；跨不连续边界时沿用上一点，避免假尖峰
+        // Forward pass: display value per sample; reuse previous value across discontinuous steps
         float[] all = new float[n];
         double scale = Math.max(1, routineTicks) / 20.0;
         float lastRate = 0f;
@@ -178,7 +183,7 @@ public final class ThroughputHistory {
                 all[i] = (float) amountAt(i);
                 continue;
             }
-            // 本步速率
+            // Rate of this step
             float rate;
             if (i == 0 || !continuousAt(i)) {
                 rate = lastRate;
@@ -186,7 +191,7 @@ public final class ThroughputHistory {
                 double seconds = deltaAt(i) / 20.0;
                 rate = (float) ((amountAt(i) - amountAt(i - 1)) / seconds * scale);
             }
-            // 本步加速度
+            // Acceleration of this step
             float accel;
             if (i == 0 || !continuousAt(i)) {
                 accel = lastAccel;
@@ -199,7 +204,7 @@ public final class ThroughputHistory {
             lastAccel = accel;
         }
 
-        // 窗口裁剪：自末尾向前累加 tick（同时统计实际覆盖的秒数）
+        // Window clipping: accumulate ticks from the end (also tracking covered seconds)
         long windowTicks = (long) window.seconds * 20L;
         long acc = 0L;
         int from = 0;
@@ -216,7 +221,7 @@ public final class ThroughputHistory {
         }
         double coveredSeconds = acc / 20.0;
 
-        // 分桶平均降采样
+        // Bucketed average downsampling
         int points = Math.min(MAX_POINTS, span);
         float[] out = new float[points];
         for (int p = 0; p < points; p++) {
@@ -253,10 +258,10 @@ public final class ThroughputHistory {
     }
 
     // ------------------------------------------------------------------
-    // 编码 / 解码：@GuiSync 只支持原生类型，这里用紧凑字符串
+    // Encode / decode: @GuiSync only supports primitive types, so use a compact string
     // ------------------------------------------------------------------
 
-    /** 编码为 {@code "跨度秒;v0,v1,..."}。 */
+    /** Encode as {@code "spanSeconds;v0,v1,..."}. */
     public static String encode(Series series) {
         float[] values = series.values();
         var sb = new StringBuilder(values.length * 8 + 12);
@@ -270,7 +275,7 @@ public final class ThroughputHistory {
         return sb.toString();
     }
 
-    /** 解析 {@link #encode(Series)} 的字符串。 */
+    /** Parse the string produced by {@link #encode(Series)}. */
     public static Series decode(String encoded) {
         if (encoded == null || encoded.isEmpty()) {
             return Series.EMPTY;

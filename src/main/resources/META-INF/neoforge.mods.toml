@@ -1,0 +1,74 @@
+# NeoForge mod metadata (1.21.1). File MUST be named META-INF/neoforge.mods.toml --
+# Forge's META-INF/mods.toml is no longer read by NeoForge.
+modLoader="javafml"
+# NeoForge's javafml language loader is version 1 in the 21.1 line (AE2 19.2.17 ships "[1,)").
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+issueTrackerURL="https://github.com/cheesexiaolv/AE-MonitorNet/issues"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+credits="ME throughput monitor ported from AdvancedAE by Pedroksl (LGPL-3.0); see NOTICE.txt for the full attribution list."
+description='''${mod_description}'''
+
+# NeoForge 1.21 dependency syntax: `type` (REQUIRED/OPTIONAL/INCOMPATIBLE/DISCOURAGED) replaces
+# Forge's `mandatory=true`.
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="REQUIRED"
+    versionRange="${neo_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="REQUIRED"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+# This mod is an AE2 addon: it extends AE2's monitor part API and therefore hard-depends on AE2.
+# 1.21.1 branch: AE2 19.x (the AE2 line for MC 1.21.1 / NeoForge 21.1).
+[[dependencies.${mod_id}]]
+    modId="ae2"
+    type="REQUIRED"
+    versionRange="[${ae2_version},)"
+    ordering="AFTER"
+    side="BOTH"
+
+# GuideME: mandatory prerequisite of AE2 19.x, and our own guidebook pages use its 21.x format.
+[[dependencies.${mod_id}]]
+    modId="guideme"
+    type="REQUIRED"
+    versionRange="[21.1.1,)"
+    ordering="AFTER"
+    side="BOTH"
+
+# AE2WTLib: lets the wireless throughput terminal register inside its Universal Terminal (WUT).
+# Soft dependency: without it we register the base wireless terminal item instead. The xmod
+# classes are only class-loaded when the mod is present (see Init/ModItems).
+[[dependencies.${mod_id}]]
+    modId="ae2wtlib"
+    type="OPTIONAL"
+    versionRange="[19.5.1,)"
+    ordering="AFTER"
+    side="BOTH"
+
+# JEI / Jade: no plugin classes of our own (AE2 ships the integration); still declared so the
+# load order is stable when players install them.
+[[dependencies.${mod_id}]]
+    modId="jei"
+    type="OPTIONAL"
+    versionRange="[19.0.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="jade"
+    type="OPTIONAL"
+    versionRange="[15.0.0,)"
+    ordering="AFTER"
+    side="BOTH"

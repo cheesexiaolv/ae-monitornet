@@ -1,67 +1,69 @@
 package com.cheesexiaolv.aetm.Parts;
 
-import org.jetbrains.annotations.Nullable;
-
 import com.cheesexiaolv.aetm.Logic.ThroughputHistory;
+
+import org.jetbrains.annotations.Nullable;
 
 import appeng.api.stacks.AEKey;
 import appeng.util.ConfigInventory;
 
 /**
- * 高级吞吐量监控器菜单的宿主接口。
+ * Host interface of the advanced throughput monitor menu.
  *
- * <p>{@link AdvancedThroughputMonitorPart} 实现该接口，作为 {@code AdvancedThroughputMonitorMenu} 的 host，
- * 使 {@code MenuLocators.forPart(...)} 能定位到它，并把采样/显示状态暴露给菜单。
+ * <p>{@link AdvancedThroughputMonitorPart} implements it as the {@code host} of
+ * {@code AdvancedThroughputMonitorMenu}, so {@code MenuLocators.forPart(...)} can locate it and the
+ * menu can expose sampling/display state.
+ *
+ * <p>1.21.1 port: unchanged.
  */
 public interface IAdvancedThroughputMonitorHost {
 
-    /** 当前监控的物品/流体 key，可能为 null（未配置）。 */
+    /** Currently monitored item/fluid key, may be null (unconfigured). */
     @Nullable
     AEKey getDisplayed();
 
-    /** 该物品/流体在网格中的当前存量。 */
+    /** Current stored amount of that key in the grid. */
     long getAmount();
 
-    /** 最近一次计算出的速率数值。 */
+    /** Last computed rate value. */
     double getLastReportedValue();
 
-    /** 最近一次的人类可读速率文本（如 "1.2k"）。 */
+    /** Last human readable rate text (e.g. "1.2k"). */
     String getLastHumanReadableValue();
 
-    /** 当前档位单位后缀（如 "/s"、"/m"）。 */
+    /** Unit suffix of the current routine (e.g. "/s", "/m"). */
     String getWorkRoutineUnit();
 
-    /** 切换到下一个显示档位（per t/s/m/10m）。 */
+    /** Cycle to the next display routine (per t/s/m/10m). */
     void cycleRoutine();
 
-    /** 当前档位序号（0=tick 1=second 2=minute 3=10min）。 */
+    /** Current routine ordinal (0=tick 1=second 2=minute 3=10min). */
     int getRoutineOrdinal();
 
-    /** 流体数量单位是否用 B（桶）；false 表示 mB。 */
+    /** Whether fluid amounts use B (buckets); false = mB. */
     boolean isFluidUnitB();
 
-    /** 切换流体的数量单位 mB/B。 */
+    /** Toggle fluid unit mB/B. */
     void toggleFluidUnit();
 
-    /** 配置槽（选择监控对象），供菜单的 FakeSlot 绑定。 */
+    /** Config inventory (the monitored object), bound to the menu's FakeSlot. */
     ConfigInventory getConfig();
 
-    /** 折线图当前的时间窗口。 */
+    /** Current chart time window. */
     ThroughputHistory.Window getChartWindow();
 
-    /** 切换折线图时间窗口。 */
+    /** Cycle the chart time window. */
     void cycleChartWindow();
 
-    /** 折线图当前的显示量（储量/流速/加速度）。 */
+    /** Current chart metric (storage/flow/acceleration). */
     ThroughputHistory.Metric getChartMetric();
 
-    /** 切换折线图显示量。 */
+    /** Cycle the chart metric. */
     void cycleChartMetric();
 
-    /** 当前档位代表多少 tick（折线图流速用它换算，保证与读数同单位）。 */
+    /** How many ticks the current routine represents (used to keep the chart unit consistent). */
     int getRoutineTicks();
 
-    /** 折线图数据（按当前窗口/显示量编码后的紧凑字符串）。 */
+    /** Chart data encoded as a compact string for the current window/metric. */
     String chartData();
 }
-

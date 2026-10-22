@@ -1,10 +1,12 @@
 plugins {
-    id 'eclipse'
+    id 'java-library'
     id 'idea'
     id 'maven-publish'
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
-    // This mod does not use Mixin (AE2 compat is done with a reflection soft-bridge), so the
-    // MixinGradle plugin is intentionally absent. Add it back only if a mixin config shows up.
+    // ModDevGradle (MDG) replaces ForgeGradle 6 for NeoForge. It compiles against Minecraft
+    // 1.21.1 using Mojang's official names -- the same names a production NeoForge mod jar
+    // ships with, so local AE2/GuideME/JEI/Jade jars need no deobf/remap step any more
+    // (this is why `fg.deobf` is not applicable on NeoForge).
+    id 'net.neoforged.moddev' version '2.0.107'
 }
 
 version = mod_version
@@ -14,105 +16,78 @@ base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+// Mojang ships Java 21 for 1.21.1. The toolchain is resolved via foojay (settings.gradle);
+// the system JAVA_HOME is never changed.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
-minecraft {
-    mappings channel: mapping_channel, version: mapping_version
-    copyIdeResources = true
+repositories {
+    mavenCentral()
+    maven {
+        name = 'NeoForged'
+        url = 'https://maven.neoforged.net/releases'
+    }
+}
+
+neoForge {
+    // Pinned in gradle.properties (21.1.180). AE2 19.2.17 itself requires neoforge [21.1.169,).
+    version = project.neo_version
 
     runs {
-        configureEach {
-            workingDirectory project.file('run')
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
-            property 'forge.enabledGameTestNamespaces', mod_id
-
-            // TODO(stage 2): re-enable once runClient/runServer are actually exercised on 1.20.1.
-            // AE2 15.x ships its own mixins; a deobf'd AE2 jar in the dev env needs a remapped
-            // refmap. FG6 still produces build/createSrgToMcp/output.srg for this property.
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-
-            mods {
-                "${mod_id}" {
-                    source sourceSets.main
-                }
-            }
-        }
-
         client {
-            property 'forge.enabledGameTestNamespaces', mod_id
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
         server {
-            property 'forge.enabledGameTestNamespaces', mod_id
-            args '--nogui'
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
+    }
 
-        data {
-            workingDirectory project.file('run-data')
-            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
         }
     }
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-repositories {
-    // Local mod jars (AE2 15.4.10 lives here). fg.deobf re-maps them to dev (official) names.
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    // ---- Local "the jar players actually run" dependencies (libs/) ----
+    // NeoForge 1.21 mod jars are compiled against Mojang official names, so they can be put on
+    // the compile classpath as plain files. compileOnly is enough for `gradlew build`.
+    //
+    // AE2 19.2.17 -- the only hard dependency (part/menu/monitor APIs live here).
+    compileOnly files("libs/appliedenergistics2-${ae2_version}.jar")
+    runtimeOnly files("libs/appliedenergistics2-${ae2_version}.jar")
+    // GuideME 21.1.17 -- mandatory prerequisite of AE2 19.x (guidebook runtime + page format).
+    compileOnly files("libs/guideme-${guideme_version}.jar")
+    runtimeOnly files("libs/guideme-${guideme_version}.jar")
 
-    // AE2 15.4.10 -- the ONLY hard dependency. Taken from libs/ as a production jar and
-    // deobfuscated with fg.deobf so the official (Mojang) names line up with the dev workspace.
-    compileOnly fg.deobf("blank:appliedenergistics2-forge:${ae2_version}")
-    // 开发运行时（runClient / runServer）也要能加载 AE2，否则 FML 报 "ae2 is not installed"。
-    // guideme 是 AE2 15.x 的 mandatory 前置（AE2 的 mods.toml：guideme [20.1.7,20.2.0)）。
-    runtimeOnly fg.deobf("blank:appliedenergistics2-forge:${ae2_version}")
-    runtimeOnly fg.deobf("blank:guideme:20.1.14")
-
-    // Removed for 1.20.1 (stage 1), re-added in stage 2 -- see docs/port-1.20.1.md:
-    //  - JEI / Jade: this mod has no plugin classes of its own; the integration is AE2's own
-    //    JEI/Jade plugin plus the Igtooltip providers kept in client/{ClientTooltipFixer,
-    //    MonitorTooltipLockFix}. They are still compile+runtime deps so that the dev client
-    //    actually loads them (and so a future plugin class would compile against the same jar
-    //    the players run).
-    //  - AE2WTLib (WUT / universal terminal): mandatory dependencies of its mods.toml are
-    //    ae2 [15.4.10,16), cloth_config, architectury and curios -> all four are supplied as
-    //    runtimeOnly from libs/ so `runClient` can be exercised against the real thing.
-    compileOnly fg.deobf("blank:${jei_artifact}:${jei_version}")
-    runtimeOnly fg.deobf("blank:${jei_artifact}:${jei_version}")
-    compileOnly fg.deobf("blank:${jade_artifact}:${jade_version}")
-    runtimeOnly fg.deobf("blank:${jade_artifact}:${jade_version}")
-
-    compileOnly fg.deobf("blank:ae2wtlib:${ae2wtlib_version}")
-    runtimeOnly fg.deobf("blank:ae2wtlib:${ae2wtlib_version}")
-    // AE2WTLib's mandatory prerequisites (its META-INF/mods.toml):
-    //   ae2 [15.4.10,16)  /  cloth_config  /  architectury  /  curios
-    runtimeOnly fg.deobf("blank:architectury:${architectury_version}")
-    runtimeOnly fg.deobf("blank:cloth-config:${clothconfig_version}")
-    runtimeOnly fg.deobf("blank:curios-forge:${curios_version}")
+    // Soft dependencies, stage 2 of the port (WUT integration / tooltip providers). Kept on the
+    // compile classpath so a future plugin class compiles against exactly the jar players use.
+    // NOTE: AE2WTLib also needs cloth-config + architectury + curios at runtime; those are not
+    // in libs/ yet, so runClient is not expected to work until they are copied in.
+    compileOnly files("libs/ae2wtlib-${ae2wtlib_version}.jar")
+    compileOnly files("libs/jei-1.21.1-neoforge-${jei_version}.jar")
+    compileOnly files("libs/Jade-1.21.1-NeoForge-${jade_version}.jar")
 }
-
 
 tasks.named('processResources', ProcessResources).configure {
     var replaceProperties = [
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
-            forge_version: forge_version, forge_version_range: forge_version_range,
+            neo_version: neo_version, neo_version_range: neo_version_range,
             loader_version_range: loader_version_range,
+            ae2_version: ae2_version,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
             mod_authors: mod_authors, mod_description: mod_description,
     ]
     inputs.properties replaceProperties
 
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+    filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
 }
@@ -129,7 +104,7 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
-    finalizedBy 'reobfJar'
+    // No reobfJar on NeoForge 1.21: mods are compiled directly against official names.
 }
 
 publishing {

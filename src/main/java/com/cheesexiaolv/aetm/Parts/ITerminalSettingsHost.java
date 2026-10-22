@@ -5,35 +5,40 @@ import com.cheesexiaolv.aetm.Logic.TerminalSettings;
 import appeng.api.stacks.AEKey;
 
 /**
- * 聚合终端的「显示设置宿主」。
+ * "Display settings host" of the aggregated terminal.
  *
- * <p>有线版把设置存在面板零件上（{@link ThroughputTerminalPart}），无线版存在物品 NBT 上
- * （{@code WirelessTerminalSettings}）；菜单只依赖这个接口，因此两种终端共用同一套菜单/界面逻辑。
+ * <p>The wired part stores the settings on the part ({@link ThroughputTerminalPart}), the wireless
+ * item stores them in item NBT ({@code WirelessTerminalSettings}); the menu only depends on this
+ * interface, so both terminals share one menu/screen implementation.
+ *
+ * <p>1.21.1 port: unchanged.
  */
 public interface ITerminalSettingsHost {
 
-    /** 全局默认设置（新出现的行按它显示）。 */
+    /** Global defaults (new rows are displayed with them). */
     TerminalSettings getGlobalSetting();
 
-    /** 某一行的有效设置（有单行覆盖用覆盖，否则用全局默认）。 */
+    /** Effective settings of one row (row override if present, else the global default). */
     TerminalSettings getSetting(AEKey key);
 
-    /** 全局按钮：改写全局默认并清空所有单行覆盖。 */
+    /** Global button: replace the default and clear all per-row overrides. */
     void setGlobalSetting(TerminalSettings setting);
 
-    /** 单行按钮：只改这一行。 */
+    /** Per-row button: change only this row. */
     void setRowSetting(AEKey key, TerminalSettings setting);
 
-    /** 视图：{@link TerminalSettings#VIEW_TEXT} 或 {@link TerminalSettings#VIEW_CHART}。 */
+    /** View: {@link TerminalSettings#VIEW_TEXT} or {@link TerminalSettings#VIEW_CHART}. */
     int getViewMode();
 
     void setViewMode(int viewMode);
 
     /**
-     * 终端尺寸档位（{@code appeng.api.config.TerminalStyle} 的 ordinal：0=短 1=中 2=长 3=满）。
+     * Terminal size ordinal ({@code appeng.api.config.TerminalStyle} ordinal: 0=short 1=medium
+     * 2=tall 3=full).
      *
-     * <p>刻意<b>不用</b> AE2 的全局 {@code AEConfig.terminalStyle}：那是客户端全局设置、默认是"短"，
-     * 我们跟着它会让聚合终端一打开只有两行。这里按终端各自记，默认"满"。
+     * <p>Deliberately <b>not</b> AE2's global {@code AEConfig.terminalStyle}: that is a client-wide
+     * setting defaulting to "short", which would make the aggregated terminal open with two rows.
+     * Stored per terminal, defaulting to "full".
      */
     int getTerminalStyle();
 

@@ -3,26 +3,31 @@ package com.cheesexiaolv.aetm.Logic;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 
 import appeng.api.stacks.AEKey;
 
 /**
- * 终端显示设置的 NBT 读写（面板零件与无线终端物品共用）。
+ * NBT read/write for the terminal display settings (shared by the part and the wireless item).
  *
- * <p>键名前缀自 1.1.0（modid 改为 {@code ae_monitornet}）起是 {@code ae_monitornet*}；
- * 改名前的 {@code aetm*} 旧键仍然<b>回退可读</b>，所以旧存档里的零件/物品不会丢设置。
- * 写入一律只写新键。
+ * <p>Key prefix is {@code ae_monitornet*} since 1.1.0 (modid rename); the pre-rename
+ * {@code aetm*} keys stay <b>readable as a fallback</b>, so old parts/items keep their settings.
+ * Writes only use the new keys.
  *
- * <p>面板零件把设置写在自己的零件 NBT 上，无线终端写在物品 NBT 上，格式完全相同。
+ * <p>1.21.1 port: AE2 19.x made generic-key serialisation registry-aware —
+ * {@code AEKey.fromTagGeneric(HolderLookup.Provider, CompoundTag)} and
+ * {@code AEKey#toTagGeneric(HolderLookup.Provider)} both take a registry lookup now
+ * (evidence: {@code reference/AE2-1.21.1-19.2.17/appeng/api/stacks/AEKey.java:109,120}).
+ * Callers pass {@code level.registryAccess()} / {@code player.level().registryAccess()}.
  */
 public final class TerminalSettingsNbt {
 
-    /** 当前键名前缀。 */
+    /** Current key prefix. */
     private static final String PREFIX = "ae_monitornet";
 
-    /** 改名前的旧键前缀，只用于读取回退。 */
+    /** Pre-rename key prefix, read-only fallback. */
     private static final String LEGACY_PREFIX = "aetm";
 
     private static final String KEY_WINDOW = PREFIX + "Window";
@@ -41,13 +46,13 @@ public final class TerminalSettingsNbt {
     private static final String OLD_KEY_OVERRIDES = LEGACY_PREFIX + "Overrides";
     private static final String OLD_KEY_STYLE = LEGACY_PREFIX + "Style";
 
-    /** 终端尺寸档位默认值：满（3 = TerminalStyle.FULL）。 */
+    /** Default terminal style ordinal: full (3 = TerminalStyle.FULL). */
     public static final int DEFAULT_STYLE = 3;
 
     private TerminalSettingsNbt() {
     }
 
-    /** 读整型：新键优先，新键不存在时回退旧键（旧键也没有时返回 0，与改名前的行为一致）。 */
+    /** Read int: new key first, old key as fallback (missing keys read as 0, as before the rename). */
     private static int getInt(CompoundTag data, String key, String legacyKey) {
         if (data.contains(key)) {
             return data.getInt(key);
@@ -55,7 +60,7 @@ public final class TerminalSettingsNbt {
         return data.getInt(legacyKey);
     }
 
-    /** 读布尔：新键优先，新键不存在时回退旧键。 */
+    /** Read boolean: new key first, old key as fallback. */
     private static boolean getBoolean(CompoundTag data, String key, String legacyKey) {
         if (data.contains(key)) {
             return data.getBoolean(key);
@@ -102,17 +107,18 @@ public final class TerminalSettingsNbt {
         return DEFAULT_STYLE;
     }
 
-    public static void writeOverrides(CompoundTag data, Map<AEKey, TerminalSettings> overrides) {
+    public static void writeOverrides(CompoundTag data, Map<AEKey, TerminalSettings> overrides,
+            HolderLookup.Provider registries) {
         if (overrides.isEmpty()) {
             data.remove(KEY_OVERRIDES);
-            // 清空时连旧键一起删，否则下次读取会从旧键里把已经清掉的覆盖项又读回来
+            // Also drop the legacy key, otherwise the next read resurrects the cleared overrides
             data.remove(OLD_KEY_OVERRIDES);
             return;
         }
         var list = new ListTag();
         for (var entry : overrides.entrySet()) {
             var tag = new CompoundTag();
-            tag.put("key", entry.getKey().toTagGeneric());
+            tag.put("key", entry.getKey().toTagGeneric(registries));
             tag.putInt("w", entry.getValue().window().ordinal());
             tag.putInt("m", entry.getValue().metric().ordinal());
             tag.putBoolean("u", entry.getValue().largeUnit());
@@ -122,7 +128,7 @@ public final class TerminalSettingsNbt {
         data.put(KEY_OVERRIDES, list);
     }
 
-    public static Map<AEKey, TerminalSettings> readOverrides(CompoundTag data) {
+    public static Map<AEKey, TerminalSettings> readOverrides(CompoundTag data, HolderLookup.Provider registries) {
         var list = data.getList(KEY_OVERRIDES, CompoundTag.TAG_COMPOUND);
         if (list.isEmpty() && data.contains(OLD_KEY_OVERRIDES)) {
             list = data.getList(OLD_KEY_OVERRIDES, CompoundTag.TAG_COMPOUND);
@@ -130,7 +136,7 @@ public final class TerminalSettingsNbt {
         var result = new HashMap<AEKey, TerminalSettings>();
         for (int i = 0; i < list.size(); i++) {
             var tag = list.getCompound(i);
-            var key = AEKey.fromTagGeneric(tag.getCompound("key"));
+            var key = AEKey.fromTagGeneric(registries, tag.getCompound("key"));
             if (key == null) {
                 continue;
             }

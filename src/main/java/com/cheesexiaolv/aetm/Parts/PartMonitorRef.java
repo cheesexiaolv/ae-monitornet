@@ -11,11 +11,13 @@ import net.minecraft.world.phys.Vec3;
 import appeng.api.stacks.AEKey;
 
 /**
- * {@link IMonitorRef} 的"自家零件"实现：直接包 本模组 的 {@link ThroughputMonitorPart}。
+ * {@link IMonitorRef} for our own part: wraps {@link ThroughputMonitorPart} directly.
  *
- * <p>类型安全、零反射（AAE 的部件才需要反射，见 {@code AaeMonitorRef}）。
+ * <p>Type-safe, zero reflection (only AdvancedAE's part needs reflection, see
+ * {@code AaeMonitorRef}). Package-private: the outside only gets {@link IMonitorRef} through
+ * {@link MonitorRefs#of}.
  *
- * <p>包私有：外面只通过 {@link MonitorRefs#of} 拿 {@link IMonitorRef}。
+ * <p>1.21.1 port: unchanged.
  */
 final class PartMonitorRef implements IMonitorRef {
 
@@ -65,18 +67,23 @@ final class PartMonitorRef implements IMonitorRef {
 
     @Override
     public boolean advanced() {
-        return this.part instanceof AdvancedThroughputMonitorPart;
+        // Stage 1: AdvancedThroughputMonitorPart is not ported yet (see docs/port-1.21.1.md).
+        // Stage 2 restores: return this.part instanceof AdvancedThroughputMonitorPart;
+        return false;
     }
 
     @Override
     @Nullable
     public Object historySource() {
-        return this.part instanceof AdvancedThroughputMonitorPart advanced ? advanced : null;
+        // Stage 1 stub (stage 2: return this.part instanceof AdvancedThroughputMonitorPart a ? a : null)
+        return null;
     }
 
     @Override
     public boolean cycleRoutineByConfigurator(Player player, InteractionHand hand, Vec3 clickLocation) {
-        // 自家零件：它的 onPartActivate 认得 本模组 的配置器并 cycle 档位
-        return this.part.onPartActivate(player, hand, clickLocation);
+        // Our part: onUseItemOn recognises our configurator and cycles the routine.
+        // 1.21.1: IPart#onPartActivate(Player, InteractionHand, Vec3) was replaced by
+        // onUseItemOn(ItemStack, Player, InteractionHand, Vec3) -- the held stack is now explicit.
+        return this.part.onUseItemOn(player.getItemInHand(hand), player, hand, clickLocation);
     }
 }

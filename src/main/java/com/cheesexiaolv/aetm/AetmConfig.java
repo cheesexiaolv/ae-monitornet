@@ -1,25 +1,28 @@
 package com.cheesexiaolv.aetm;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * AE MonitorNet 配置（生成在 {@code <存档>/serverconfig/ae_monitornet-server.toml}）。
+ * AE MonitorNet config (written to {@code <world>/serverconfig/ae_monitornet-server.toml}).
+ *
+ * <p>1.21.1 port: {@code net.minecraftforge.common.ForgeConfigSpec} was renamed to
+ * {@link ModConfigSpec}; the builder API itself is unchanged.
  */
 public final class AetmConfig {
 
-    public static final ForgeConfigSpec SPEC;
+    public static final ModConfigSpec SPEC;
 
-    /** 采样间隔（tick）。越小曲线越细腻、开销越大。20 tick = 1 秒。 */
-    public static final ForgeConfigSpec.IntValue SAMPLING_INTERVAL_TICKS;
+    /** Sampling interval in ticks. Smaller = smoother chart, more server load. 20 ticks = 1s. */
+    public static final ModConfigSpec.IntValue SAMPLING_INTERVAL_TICKS;
 
-    /** 历史缓冲保留的最大采样点数（决定最长可回看时长 = 点数 × 采样间隔）。 */
-    public static final ForgeConfigSpec.IntValue HISTORY_CAPACITY;
+    /** Maximum number of samples kept per monitor (longest history = capacity x interval). */
+    public static final ModConfigSpec.IntValue HISTORY_CAPACITY;
 
-    /** 图线绘制频率倍率：1.0 = 与服务端采样频率同速。 */
-    public static final ForgeConfigSpec.DoubleValue CHART_REFRESH_MULTIPLIER;
+    /** Chart refresh rate multiplier: 1.0 = same speed as the server sampling interval. */
+    public static final ModConfigSpec.DoubleValue CHART_REFRESH_MULTIPLIER;
 
     static {
-        var builder = new ForgeConfigSpec.Builder();
+        var builder = new ModConfigSpec.Builder();
 
         builder.comment("AE MonitorNet settings").push("throughput_monitor");
 

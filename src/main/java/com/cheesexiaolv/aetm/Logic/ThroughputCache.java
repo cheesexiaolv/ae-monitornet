@@ -7,10 +7,13 @@ import java.util.List;
 import appeng.hooks.ticking.TickHandler;
 
 /**
- * 吞吐量采样缓存：保存 (数量, 服务器刻) 样本，用于估算一段时间内的平均每刻变化量。
+ * Throughput sample cache: keeps (amount, server tick) samples and estimates the average
+ * per-tick change over a window.
  *
- * <p>与 Advanced AE 1.20.1 的 {@code ThroughputCache} 逻辑一致，仅将缓存容量改为可由构造参数传入
- * （Advanced AE 默认通过配置文件取 80）。
+ * <p>Same logic as Advanced AE's {@code ThroughputCache}; the capacity is a constructor argument.
+ *
+ * <p>1.21.1 port: unchanged — {@code appeng.hooks.ticking.TickHandler.instance()#getCurrentTick()}
+ * still exists in AE2 19.2.17 ({@code appeng/hooks/ticking/TickHandler.java:57,312}).
  */
 public class ThroughputCache {
 
@@ -40,7 +43,8 @@ public class ThroughputCache {
     }
 
     /**
-     * 计算最近 {@code timeLimit_s} 秒窗口内、按相邻样本时间间隔加权后的平均每刻变化量。
+     * Average per-tick change over the last {@code timeLimit_s} seconds, weighting each pair of
+     * adjacent samples by their tick gap.
      */
     public double averagePerTick(int timeLimit_s) {
         long now = TickHandler.instance().getCurrentTick();
