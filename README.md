@@ -86,6 +86,12 @@ Each Minecraft version lives on its own branch (`main` and `aetm-1.19.2` = 1.19.
 1.20.1); check out the branch you want and build it there. The 1.19.2 branch resolves AE2 12.9.9 as a
 normal Gradle dependency; the 1.20.1 branch expects the AE2 15.4.10 jar in `libs/`.
 
+### Links
+
+- **CurseForge**: https://www.curseforge.com/minecraft/mc-mods/ae2-monitornet
+- **GitHub releases**: https://github.com/cheesexiaolv/ae-monitornet/releases
+- **Source & issues**: https://github.com/cheesexiaolv/ae-monitornet
+
 ### License and attribution
 
 This mod is licensed under **GNU LGPL-3.0** (see `LICENSE`).
@@ -168,6 +174,12 @@ Windows 上把 `./gradlew` 换成 `gradlew.bat`（例如 `gradlew.bat build --of
 每个 Minecraft 版本各在一条分支上（`main` / `aetm-1.19.2` = 1.19.2，`aetm-1.20.1` = 1.20.1），切到
 目标分支再构建；1.19.2 分支把 AE2 12.9.9 当普通 Gradle 依赖解析，1.20.1 分支需要把 AE2 15.4.10 的 jar
 放进 `libs/`。
+
+### 链接
+
+- **CurseForge**：https://www.curseforge.com/minecraft/mc-mods/ae2-monitornet
+- **GitHub 发行版**：https://github.com/cheesexiaolv/ae-monitornet/releases
+- **源码与问题反馈**：https://github.com/cheesexiaolv/ae-monitornet
 
 ### 许可与署名
 
