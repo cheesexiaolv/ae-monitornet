@@ -220,7 +220,7 @@ public class TerminalWindow {
         drawSlotRow(guiGraphics, font, screen, row);
 
         // 曲线常显（「曲线 / 曲线×」按钮已按用户要求删掉）
-        drawChart(guiGraphics, font, screen, row);
+        drawChart(guiGraphics, font, screen, row, mouseX, mouseY);
 
         // ⚠️ 按钮最后画（压在标题栏与槽行之上），而字符又是按钮里最后画的 —— 否则会被底/描边盖住
         drawButtons(guiGraphics, font, mouseX, mouseY, row);
@@ -327,9 +327,11 @@ public class TerminalWindow {
      *
      * <p>为什么不用客户端自记那份：刚开窗时它只有一两个样本，直接画会从 0 拉出一条夸张的斜线。
      * 服务端那份（{@code screen.seriesFor}）是完整采样历史，开窗即准；拿不到才退回客户端自记兜底。
+     *
+     * <p>鼠标坐标是<b>面板相对</b>的（与图表坐标同一套），悬停层用它吸附采样点并画浮窗。
      */
     private void drawChart(GuiGraphics guiGraphics, Font font, ThroughputTerminalScreen<?> screen,
-            @Nullable TerminalRow row) {
+            @Nullable TerminalRow row, int mouseX, int mouseY) {
         int chartX = x + 10;
         int chartY = y + SLOT_ROW_Y + SLOT_ROW_H + 4;
         if (chartY + CHART_H > y + HEIGHT) {
@@ -348,7 +350,8 @@ public class TerminalWindow {
         ThroughputHistory.Metric metric = ThroughputHistory.Metric.byOrdinal(row.metricOrdinal());
         ThroughputChart.draw(guiGraphics, font, chartX, chartY, CHART_W, CHART_H, series,
                 windowValue.seconds, ThroughputTerminalScreen.unitText(row, metric),
-                metric != ThroughputHistory.Metric.AMOUNT);
+                metric != ThroughputHistory.Metric.AMOUNT,
+                screen.hoverContext(mouseX, mouseY));
     }
 
     /** 没有曲线数据时的灰字提示（自带深色底，与折线图观感一致）。 */
