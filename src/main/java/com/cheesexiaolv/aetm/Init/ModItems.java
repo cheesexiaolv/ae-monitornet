@@ -2,7 +2,10 @@ package com.cheesexiaolv.aetm.Init;
 
 import com.cheesexiaolv.aetm.AeMonitorNet;
 import com.cheesexiaolv.aetm.Items.ThroughputMonitorConfigurator;
+import com.cheesexiaolv.aetm.Items.WirelessThroughputTerminalItem;
+import com.cheesexiaolv.aetm.Parts.AdvancedThroughputMonitorPart;
 import com.cheesexiaolv.aetm.Parts.ThroughputMonitorPart;
+import com.cheesexiaolv.aetm.Parts.ThroughputTerminalPart;
 import appeng.items.parts.PartItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
@@ -11,12 +14,12 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * Item registration (1.21.1 stage 1).
+ * Item registration (1.21.1).
  *
- * <p><b>Ported in stage 1</b>: the throughput monitor part + its configurator.
- * <b>Still missing</b> (see {@code docs/port-1.21.1.md}): the advanced monitor, the aggregated
- * terminal and the wireless terminal. Their ids are intentionally NOT registered yet, because a
- * half-registered item under the same id as the old version could corrupt existing worlds.
+ * <p><b>All 5 item ids are registered here</b>: the configurator, the basic/advanced throughput
+ * monitors, the aggregated terminal part and the wireless terminal item. Ids must never be left
+ * unregistered: parts/items already placed in an old world would silently turn into the wrong type
+ * (see {@code docs/port-1.21.1.md} §5).
  *
  * <p>1.21.1 changes: {@code ForgeRegistries.ITEMS} -> {@link Registries#ITEM},
  * {@code RegistryObject} -> {@link DeferredHolder}.
@@ -78,4 +81,30 @@ public class ModItems {
                             ThroughputMonitorPart.class,
                             ThroughputMonitorPart::new
                     ));
+
+    // 3. advanced throughput monitor (config slot + history chart)
+    public static final DeferredHolder<Item, PartItem<AdvancedThroughputMonitorPart>> ADVANCED_THROUGHPUT_MONITOR =
+            ITEMS.register("advanced_throughput_monitor",
+                    () -> new PartItem<>(
+                            new Item.Properties(),
+                            AdvancedThroughputMonitorPart.class,
+                            AdvancedThroughputMonitorPart::new
+                    ));
+
+    // 4. aggregated throughput terminal: enumerates every monitor on the network, merges rows by key
+    public static final DeferredHolder<Item, PartItem<ThroughputTerminalPart>> THROUGHPUT_TERMINAL =
+            ITEMS.register("throughput_terminal",
+                    () -> new PartItem<>(
+                            new Item.Properties(),
+                            ThroughputTerminalPart.class,
+                            ThroughputTerminalPart::new
+                    ));
+
+    // 5. wireless storage monitoring terminal: shares the wired menu/screen; linking and power drain
+    //    use AE2's wireless-terminal mechanics. Registered with the AE2-only base class for now; the
+    //    AE2WTLib universal-terminal subclass (1.20.1 `xmod/ae2wtlib`) is part of the later WUT stage.
+    //    Its GridLinkable handler is registered by CommonEvents (net-menus).
+    public static final DeferredHolder<Item, Item> WIRELESS_THROUGHPUT_TERMINAL =
+            ITEMS.register("wireless_throughput_terminal",
+                    () -> new WirelessThroughputTerminalItem(new Item.Properties().stacksTo(1)));
 }

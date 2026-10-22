@@ -50,8 +50,9 @@ public class AeMonitorNet {
                         if (ModItems.providesBasicMonitor()) {
                             output.accept(ModItems.THROUGHPUT_MONITOR.get());
                         }
-                        // Stage 1: advanced monitor / terminal / wireless terminal are not ported yet
-                        // (see docs/port-1.21.1.md, "未完成项").
+                        output.accept(ModItems.ADVANCED_THROUGHPUT_MONITOR.get());
+                        output.accept(ModItems.THROUGHPUT_TERMINAL.get());
+                        output.accept(ModItems.WIRELESS_THROUGHPUT_TERMINAL.get());
                     })
                     .build());
 

@@ -1,0 +1,30 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "ae_monitornet:wireless_universal_terminal/upgrade_throughput"
+    ]
+  },
+  "criteria": {
+    "has_throughput": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          "ae_monitornet:wireless_throughput_terminal"
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "ae_monitornet:wireless_universal_terminal/upgrade_throughput"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_throughput",
+      "has_the_recipe"
+    ]
+  ]
+}

@@ -67,16 +67,13 @@ final class PartMonitorRef implements IMonitorRef {
 
     @Override
     public boolean advanced() {
-        // Stage 1: AdvancedThroughputMonitorPart is not ported yet (see docs/port-1.21.1.md).
-        // Stage 2 restores: return this.part instanceof AdvancedThroughputMonitorPart;
-        return false;
+        return this.part instanceof AdvancedThroughputMonitorPart;
     }
 
     @Override
     @Nullable
     public Object historySource() {
-        // Stage 1 stub (stage 2: return this.part instanceof AdvancedThroughputMonitorPart a ? a : null)
-        return null;
+        return this.part instanceof AdvancedThroughputMonitorPart advanced ? advanced : null;
     }
 
     @Override

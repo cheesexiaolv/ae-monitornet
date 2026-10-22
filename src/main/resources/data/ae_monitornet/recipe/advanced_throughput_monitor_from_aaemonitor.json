@@ -1,0 +1,21 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "aaemonitor"
+    }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "aaemonitor:throughput_monitor"
+    },
+    {
+      "item": "ae2:engineering_processor"
+    }
+  ],
+  "result": {
+    "id": "ae_monitornet:advanced_throughput_monitor",
+    "count": 1
+  }
+}
