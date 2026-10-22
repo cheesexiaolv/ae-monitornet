@@ -124,7 +124,7 @@ public final class TerminalSettingsNbt {
 
     public static Map<AEKey, TerminalSettings> readOverrides(CompoundTag data) {
         var list = data.getList(KEY_OVERRIDES, CompoundTag.TAG_COMPOUND);
-        if (list.size() == 0 && data.contains(OLD_KEY_OVERRIDES)) {
+        if (list.isEmpty() && data.contains(OLD_KEY_OVERRIDES)) {
             list = data.getList(OLD_KEY_OVERRIDES, CompoundTag.TAG_COMPOUND);
         }
         var result = new HashMap<AEKey, TerminalSettings>();
