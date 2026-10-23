@@ -13,6 +13,7 @@ import appeng.menu.locator.MenuLocators;
 import appeng.util.ConfigInventory;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -27,6 +28,21 @@ import net.minecraft.world.phys.Vec3;
  * <p>无普通监控器的"锁定"机制（shift+右键同样打开 GUI）；流体的数量显示单位可切换 mB/B。
  */
 public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart implements IAdvancedThroughputMonitorHost {
+
+    /**
+     * 配置槽的 NBT 名。AE2 自己的 level emitter 也是这么存的
+     * （AE2 15.4.10 {@code appeng/parts/automation/StorageLevelEmitterPart.java:275-283} 的
+     * {@code writeToNBT} -> {@code config.writeToChildTag(data, "config")}）。
+     *
+     * <p>以前配置槽是靠 AE2 的 {@code configuredItem} 反推重建的，自己没有任何持久状态；
+     * 让它自带一份 NBT 后 {@code writeToNBT}/{@code readFromNBT} 才真正对称。
+     * 本改动之前的存档没有这个 tag，仍由 {@link #readFromNBT} 里的 {@code configuredItem} 回填。
+     */
+    private static final String TAG_CONFIG = "monitornetConfig";
+
+    /** 折线图设置（以前每次重启都回到默认值）。 */
+    private static final String TAG_CHART_WINDOW = "chartWindow";
+    private static final String TAG_CHART_METRIC = "chartMetric";
 
     private final ConfigInventory config = ConfigInventory.configTypes(1, this::onConfigChanged);
 
@@ -43,6 +59,12 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     private ThroughputHistory.Metric chartMetric = ThroughputHistory.Metric.RATE;
 
     private boolean fluidUnitB;
+
+    /**
+     * {@code true} 表示正在 {@link #readFromNBT} 恢复状态：读档期间配置槽的变更监听同样会触发，
+     * 而"读档"不能把 chunk 标脏（否则用来判断要不要落盘的脏标记就失去意义了）。
+     */
+    private boolean restoring;
 
     public AdvancedThroughputMonitorPart(IPartItem<?> partItem) {
         super(partItem);
@@ -94,7 +116,7 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     @Override
     public void cycleChartWindow() {
         this.chartWindow = this.chartWindow.next();
-        getHost().markForUpdate();
+        markSettingsChanged();
     }
 
     @Override
@@ -105,7 +127,7 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     @Override
     public void cycleChartMetric() {
         this.chartMetric = this.chartMetric.next();
-        getHost().markForUpdate();
+        markSettingsChanged();
     }
 
     @Override
@@ -172,17 +194,46 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     public void writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
         data.putBoolean("fluidUnitB", this.fluidUnitB);
+        data.putInt(TAG_CHART_WINDOW, this.chartWindow.ordinal());
+        data.putInt(TAG_CHART_METRIC, this.chartMetric.ordinal());
+        // 配置槽自己写一份 NBT，写法与 AE2 的 level emitter 完全一致
+        this.config.writeToChildTag(data, TAG_CONFIG);
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
-        super.readFromNBT(data);
-        this.fluidUnitB = data.getBoolean("fluidUnitB");
-        // 配置槽持久化：configuredItem 已由父类 writeToNBT/readFromNBT 持久化，
-        // 读回后把配置槽的显示也同步成已恢复的监控对象。
-        var displayed = getDisplayed();
-        if (displayed != null) {
-            this.config.setStack(0, new GenericStack(displayed, 1));
+        this.restoring = true;
+        try {
+            // 恢复 AE2 的 configuredItem（外加基类那份自有 key，见父类）
+            super.readFromNBT(data);
+
+            this.fluidUnitB = data.getBoolean("fluidUnitB");
+            // 旧存档（本改动之前）没有折线图设置：保持默认值，而不是被钳到 ordinal 0
+            if (data.contains(TAG_CHART_WINDOW)) {
+                this.chartWindow = ThroughputHistory.Window.byOrdinal(data.getInt(TAG_CHART_WINDOW));
+            }
+            if (data.contains(TAG_CHART_METRIC)) {
+                this.chartMetric = ThroughputHistory.Metric.byOrdinal(data.getInt(TAG_CHART_METRIC));
+            }
+
+            // 1) 现在的存档：配置槽本身。只有列表里真的有一格时才读 ——
+            //    列表缺失/为空时 readFromChildTag() 会清空配置槽并触发监听，
+            //    把上面刚恢复的 key 又抹掉。
+            if (data.contains(TAG_CONFIG, Tag.TAG_LIST)
+                    && !data.getList(TAG_CONFIG, Tag.TAG_COMPOUND).isEmpty()) {
+                this.config.readFromChildTag(data, TAG_CONFIG);
+            }
+
+            // 2) 配置槽还没落盘之前的存档：AE2 的 "configuredItem" 是唯一副本
+            //    -> 回填进配置槽，让 GUI 重新显示监控对象。
+            if (this.config.getKey(0) == null) {
+                var displayed = getDisplayed();
+                if (displayed != null) {
+                    this.config.setStack(0, new GenericStack(displayed, 1));
+                }
+            }
+        } finally {
+            this.restoring = false;
         }
     }
 
@@ -196,8 +247,15 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
         this.fluidUnitB = !this.fluidUnitB;
         // 面板上的单位/数值随之改变 → 绕过基类"内容没变就不广播"的收口，保证下一次一定广播
         invalidateBroadcastCache();
-        getHost().markForSave();
-        getHost().markForUpdate();
+        markSettingsChanged();
+    }
+
+    /** 持久化的 GUI 设置变了：宿主必须重新落盘，而不只是重新同步客户端。 */
+    private void markSettingsChanged() {
+        if (getHost() != null) {
+            getHost().markForSave();
+            getHost().markForUpdate();
+        }
     }
 
     /**
@@ -209,6 +267,13 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
      */
     private void onConfigChanged() {
         var key = this.config.getKey(0);
+
+        // 读档恢复配置槽时变更监听也会触发；而没挂载宿主的零件（例如游戏内自检）
+        // 也完全不该去碰 host。
+        if (getHost() == null) {
+            return;
+        }
+
         setConfiguredItem(key);
 
         // 监控对象切换后 watcher 立即盯新物品（amount 也会随之刷新）
@@ -217,6 +282,15 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
         clearSampleCache();
         // 换了监控对象，历史曲线清零重来
         this.history.clear();
+
+        // ⚠️ "重启后监控对象不见了"的根因：配置槽是持久数据，变更时必须把宿主标脏存档；
+        // 只调 markForUpdate() 仅重新同步客户端。MC 1.20.1 停服时只写"脏"区块
+        // （MinecraftServer#stopServer -> saveAllChunks(..., forced=false) ->
+        //  ChunkMap#save 对 !chunk.isUnsaved() 直接 return），所以 key 只留在内存里，
+        //  重进世界后零件就没有监控对象了。
+        if (!this.restoring) {
+            getHost().markForSave();
+        }
         getHost().markForUpdate();
     }
 }
