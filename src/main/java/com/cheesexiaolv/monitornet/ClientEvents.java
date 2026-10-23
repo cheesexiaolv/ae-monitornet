@@ -78,7 +78,9 @@ public class ClientEvents {
     @SubscribeEvent
     public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
         event.getItemColors().register(
-                (stack, tintIndex) -> AEColor.TRANSPARENT.getVariantByTintIndex(tintIndex),
+                // AE2 的 AEColor#getVariantByTintIndex 只返回 RGB（alpha=0）；1.21.1 的物品渲染会读 alpha，
+                // 直接返回会让三个灯光层整层透明（物品栏图标只剩边框）。这里显式补成不透明。
+                (stack, tintIndex) -> tintIndex <= 0 ? -1 : (0xFF000000 | AEColor.TRANSPARENT.getVariantByTintIndex(tintIndex)),
                 ModItems.THROUGHPUT_MONITOR.get(),
                 ModItems.ADVANCED_THROUGHPUT_MONITOR.get(),
                 ModItems.THROUGHPUT_TERMINAL.get(),
