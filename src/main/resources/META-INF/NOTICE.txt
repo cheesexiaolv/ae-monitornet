@@ -23,10 +23,13 @@ history, unit derivation, chart and the terminal UI) is our own implementation.
    mod; AE2 is compiled against, never bundled.
    Also: every part and item face is referenced straight out of AE2's own
    resources (ae2:part/..., ae2:item/...); none of AE2's textures is copied into
-   this jar. The only files under assets/ae_monitornet/textures/ are this
-   project's own art: the two terminal light layers it draws itself
-   (part/terminal_front_medium.png, part/terminal_front_bright.png) and the
-   configurator icon (item/throughput_monitor_configurator).
+   this jar. Every texture this jar ships is this project's own art: the three
+   terminal light layers it draws itself (part/terminal_front_medium.png,
+   part/terminal_front_bright.png, part/terminal_front_dark.png), the
+   configurator icon (item/throughput_monitor_configurator), and the three GUI
+   backgrounds under assets/ae2/textures/guis/ (ae_monitornet_monitor.png,
+   ae_monitornet_terminal.png, ae_monitornet_window.png), which sit in the ae2
+   namespace because AE2 resolves style textures from there only.
 
 Original work in this mod (not derived from the projects above):
   - ThroughputHistory: discontinuity-aware sampling history, per-window series
@@ -36,6 +39,7 @@ Original work in this mod (not derived from the projects above):
   - AdvancedThroughputMonitorPart, the storage monitor terminal (part + item),
     the draggable per-target chart windows, the block highlight ("locate")
     feature, the terminal row merging/sync protocol and all of this mod's own
-    textures (the two part light layers and the configurator icon).
+    textures (the three part light layers, the configurator icon and the GUI
+    backgrounds).
 
 All trademarks and copyrights remain with their respective owners.
