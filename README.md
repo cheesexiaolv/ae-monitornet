@@ -26,8 +26,9 @@
 ---
 ## English
 
-Monitoring tools and monitoring terminals for **Applied Energistics 2**, shipped for two Minecraft
-versions: **1.19.2 (Forge 43)** and **1.20.1 (Forge 47)**.
+Monitoring tools and monitoring terminals for **Applied Energistics 2**, shipped for three Minecraft
+versions: **1.19.2 (Forge 43)**, **1.20.1 (Forge 47)** and **1.21.1 (NeoForge 21.1)**. The 1.19.2 line
+is final (bug fixes only); new features land on the 1.20.1 and 1.21.1 lines.
 
 - Mod id: `ae_monitornet`.
 - CurseForge slug: `ae-monitornet`.
@@ -40,10 +41,27 @@ versions: **1.19.2 (Forge 43)** and **1.20.1 (Forge 47)**.
 | **Advanced ME Throughput Monitor** | The same part, plus an in-GUI configuration slot, a sampling history and a line chart (storage / flow / acceleration) with a selectable time window. Hover the plot for a crosshair that snaps to the nearest sample and shows that sample's value and how long ago it was taken. |
 | **ME Storage Monitor Terminal** | A cable part that lists **every throughput monitor on its network**, merges monitors that watch the same key into one row, and opens **draggable per-target chart windows** (display slot + chart + per-window metric/unit buttons + a "locate" highlight in the world). |
 | **Wireless ME Storage Monitor Terminal** | The same terminal as an AE2 wireless terminal: link it in a Security Terminal and use it inside a Wireless Access Point's range. |
+| **Wireless Universal Terminal integration** | With **AE2WTLib** installed, the wireless terminal registers itself as a switchable terminal inside AE2WTLib's Universal Terminal (terminal id `throughput`), its hotkey joins AE2's key category, and AE2WTLib's `upgrade` / `combine` recipes for it resolve. Without AE2WTLib nothing breaks: the item stays a plain AE2 wireless terminal. |
 | **Throughput Monitor Configurator** | A hand-held tool: right-click a monitor to cycle its rate tier without opening any GUI. |
 
 Right-click a part to open its GUI; **double-click a row** in the terminal to open that row's floating
 chart window.
+
+### Item names and lang keys
+
+| Item id | English | 中文 |
+|---|---|---|
+| `throughput_monitor` | ME Throughput Monitor | ME吞吐量监控器 |
+| `advanced_throughput_monitor` | Advanced ME Throughput Monitor | 高级ME吞吐量监控器 |
+| `throughput_terminal` | ME Storage Monitor Terminal | ME存储监控终端 |
+| `wireless_throughput_terminal` | Wireless ME Storage Monitor Terminal | 无线ME存储监控终端 |
+| `throughput_monitor_configurator` | Throughput Monitor Configurator | 吞吐量监控配置器 |
+
+All GUI text goes through lang keys (`gui.ae_monitornet.*`, `item.ae_monitornet.*`); there are no
+hard-coded strings left in the screens. The wireless terminal's keybind is
+`key.ae2.wireless_throughput_terminal` ("Open Wireless Storage Monitor Terminal"): it is registered
+with AE2's hotkey system together with the AE2WTLib integration, so it shows up under
+**Options → Controls → AE2**.
 
 ### Supported versions
 
@@ -51,16 +69,31 @@ chart window.
 |---|---|---|---|---|
 | **1.19.2** | Forge 43 (`[43,44)`) | 12.9.9 | AE2WTLib 12.9.7 (Universal Terminal) | `main` / `aetm-1.19.2` |
 | **1.20.1** | Forge 47 (`[47,)`) | 15.4.10 (`[15.4.10,16)`) | AE2WTLib 15.3.3 (Universal Terminal), GuideME 20.1.x (in-game guide) | `aetm-1.20.1` |
+| **1.21.1** | NeoForge 21.1 (`[21.1.169,)`) | 19.2.17 (`[19.2.17,)`) | AE2WTLib 19.5.1 (Universal Terminal); GuideME 21.1.17 is required by AE2 19.x itself | `1.21.1` |
 
-Java 17 is enough for both targets. Nothing besides AE2 is mandatory.
+Java 17 is enough for the two Forge lines; **1.21.1 needs Java 21** (Minecraft 1.21.1 / NeoForge 21.1).
+Nothing besides AE2 is a hard dependency of ours — the 1.21.1 metadata also requires GuideME, but only
+because AE2 19.x itself requires it.
 
 ### Optional integrations
 
-* **AE2WTLib** — the wireless terminal registers itself as one of the Universal Terminal's switchable
-  terminals, so you can put it in a Universal Terminal and switch to it from there.
-* **GuideME** (1.20.1) — an in-game guide page covers every item: `/guideme open @s ae_monitornet:guide`,
-  or hold **G** in a container with one of our items under the cursor.
+* **AE2WTLib** — a soft dependency on every line (1.19.2: 12.9.7, 1.20.1: 15.3.3, 1.21.1: 19.5.1).
+  With it installed the wireless terminal registers itself as one of the Universal Terminal's
+  switchable terminals, its hotkey is added to AE2's key category, and AE2WTLib's `upgrade` / `combine`
+  recipes for that terminal resolve. Without it the same item is registered as a plain AE2 wireless
+  terminal (Security Terminal link + Wireless Access Point range) and no AE2WTLib class is loaded.
+* **GuideME** — 1.21.1 needs it anyway (it is AE2 19.x's own prerequisite), but our own guide pages
+  currently ship **only on the 1.20.1 branch**: `/guideme open @s ae_monitornet:guide`, or hold **G**
+  in a container with one of our items under the cursor. The 1.19.2 and 1.21.1 builds ship no guide
+  pages yet.
 * **JEI / Jade** — we ship no plugins of our own; they coexist with the mod (recipe display comes from AE2).
+
+### Known limitations
+
+* Every button is drawn in code (`FlatButton`: two `fill` calls plus a centred label) instead of using
+  AE2's nine-slice GUI sprites, so button backgrounds, borders and hover colours do not match vanilla
+  AE2 widgets exactly.
+* On 1.21.1 (AE2 19.x) some buttons look different from the vanilla ones for the same reason.
 
 ### Configuration
 
@@ -83,8 +116,11 @@ On Windows use `gradlew.bat` instead of `./gradlew` (for example `gradlew.bat bu
 network.
 
 Each Minecraft version lives on its own branch (`main` and `aetm-1.19.2` = 1.19.2, `aetm-1.20.1` =
-1.20.1); check out the branch you want and build it there. The 1.19.2 branch resolves AE2 12.9.9 as a
-normal Gradle dependency; the 1.20.1 branch expects the AE2 15.4.10 jar in `libs/`.
+1.20.1, `1.21.1` = 1.21.1); check out the branch you want and build it there. The 1.19.2 branch resolves
+AE2 12.9.9 as a normal Gradle dependency; the 1.20.1 branch expects the AE2 15.4.10 jar in `libs/`; the
+1.21.1 branch builds with ModDevGradle on NeoForge 21.1, expects the AE2 19.2.17, GuideME 21.1.17,
+AE2WTLib 19.5.1, JEI and Jade jars in `libs/`, and needs Java 21 (the toolchain is provisioned
+automatically by the `foojay` resolver).
 
 ### Links
 
@@ -119,12 +155,19 @@ play-tested by a human before release.
 
 This mod used to be called **AE Throughput Monitor** (mod id `aetm`) and is now **AE MonitorNet** (`ae_monitornet`); old NBT keys are still read back, and an old `aetm-server.toml` has to be copied over to `ae_monitornet-server.toml` by hand.
 
+The sources were renamed with it: the 1.20.1 and 1.21.1 branches use the `com.cheesexiaolv.monitornet`
+package and the `ae_monitornet` Gradle project; the 1.19.2 branch still uses its original
+`com.cheesexiaolv.aetm` package, although its Gradle group id and `rootProject.name` are already
+`com.cheesexiaolv.monitornet` / `ae-monitornet`. The shipped jar is `ae_monitornet-<version>.jar` on
+every branch.
+
 ---
 
 ## 中文
 
-**适用于 Applied Energistics 2（应用能源2）的监控工具与监控终端**，目前同时提供
-**1.19.2（Forge 43）** 与 **1.20.1（Forge 47）** 两个版本。
+**适用于 Applied Energistics 2（应用能源2）的监控工具与监控终端**，目前提供
+**1.19.2（Forge 43）**、**1.20.1（Forge 47）** 与 **1.21.1（NeoForge 21.1）** 三个版本：1.19.2 线已定版（只修 bug），
+新功能放在 1.20.1 与 1.21.1 两条线上。
 
 - 模组 id：`ae_monitornet`。
 - CurseForge slug：`ae-monitornet`。
@@ -137,9 +180,24 @@ This mod used to be called **AE Throughput Monitor** (mod id `aetm`) and is now 
 | **高级ME吞吐量监控器** | 同上，另带界面内配置槽、采样历史，以及可选时间窗口的折线图（存量 / 流量 / 加速度）。鼠标停在曲线上会出现十字准线：吸附到最近的采样点，并显示该点的数值与"多久以前"。 |
 | **ME存储监控终端** | 线缆部件：列出**同一网络上所有吞吐量监控器**，把监控同一对象的多个监控器合并成一行，并为每行打开**可拖动的独立曲线子窗口**（显示槽 + 折线图 + 每个窗口独立的指标/单位按钮 +「定位」世界里高亮）。 |
 | **无线ME存储监控终端** | 与上面相同的终端，但做成 AE2 无线终端：在安全终端里链接，待在无线访问点范围内使用。 |
+| **无线通用终端集成** | 装了 **AE2WTLib** 时，无线终端还会注册成 AE2WTLib 通用终端（Universal Terminal）里可切换的一个终端（终端 id `throughput`），热键进 AE2 的按键分类，`upgrade` / `combine` 配方也随之解析；没装 AE2WTLib 也不影响使用，物品照旧是普通 AE2 无线终端。 |
 | **吞吐量监控配置器** | 手持工具：右键监控器即可循环切换速率档位，不用打开任何界面。 |
 
 右键部件打开它的界面；在终端里**双击某一行**打开该行的浮动曲线子窗口。
+
+### 物品名与 lang key
+
+| 物品 id | 英文 | 中文 |
+|---|---|---|
+| `throughput_monitor` | ME Throughput Monitor | ME吞吐量监控器 |
+| `advanced_throughput_monitor` | Advanced ME Throughput Monitor | 高级ME吞吐量监控器 |
+| `throughput_terminal` | ME Storage Monitor Terminal | ME存储监控终端 |
+| `wireless_throughput_terminal` | Wireless ME Storage Monitor Terminal | 无线ME存储监控终端 |
+| `throughput_monitor_configurator` | Throughput Monitor Configurator | 吞吐量监控配置器 |
+
+界面文字全部走 lang key（`gui.ae_monitornet.*`、`item.ae_monitornet.*`），屏幕代码里没有硬编码中文。无线终端的热键是
+`key.ae2.wireless_throughput_terminal`（"打开无线ME存储监控终端"），它随 AE2WTLib 集成一起挂进 AE2 的热键系统，
+在 **选项 → 控制 → AE2** 里可以找到。
 
 ### 版本支持
 
@@ -147,15 +205,25 @@ This mod used to be called **AE Throughput Monitor** (mod id `aetm`) and is now 
 |---|---|---|---|---|
 | **1.19.2** | Forge 43（`[43,44)`） | 12.9.9 | AE2WTLib 12.9.7（通用终端） | `main` / `aetm-1.19.2` |
 | **1.20.1** | Forge 47（`[47,)`） | 15.4.10（`[15.4.10,16)`） | AE2WTLib 15.3.3（通用终端）、GuideME 20.1.x（游戏内指南） | `aetm-1.20.1` |
+| **1.21.1** | NeoForge 21.1（`[21.1.169,)`） | 19.2.17（`[19.2.17,)`） | AE2WTLib 19.5.1（通用终端）；GuideME 21.1.17 是 AE2 19.x 自己的必需前置 | `1.21.1` |
 
-两个版本都只要 **Java 17**；除 AE2 外没有必需前置。
+两条 Forge 线只要 **Java 17**，**1.21.1 需要 Java 21**（Minecraft 1.21.1 / NeoForge 21.1）；除 AE2 外没有我们自己的硬前置
+（1.21.1 的元数据还要求 GuideME，那是 AE2 19.x 自己的必需前置）。
 
 ### 可选集成
 
-* **AE2WTLib** —— 无线终端会注册成通用终端（Universal Terminal）里可切换的一个终端。
-* **GuideME**（仅 1.20.1）—— 游戏内指南一页覆盖全部物品：`/guideme open @s ae_monitornet:guide`，
-  或在容器界面里对着本模组的物品**按住 G**。
+* **AE2WTLib** —— 三条线都是软依赖（1.19.2：12.9.7，1.20.1：15.3.3，1.21.1：19.5.1）。装了它，无线终端会注册成
+  通用终端（Universal Terminal）里可切换的一个终端，热键进 AE2 的按键分类，`upgrade` / `combine` 配方也能解析；
+  没装时注册的是只依赖 AE2 的普通无线终端（安全终端链接 + 无线访问点范围），一个 AE2WTLib 的类都不会加载。
+* **GuideME** —— 1.21.1 上它本来就是 AE2 19.x 的必需前置，不过本模组自己的指南页面**目前只在 1.20.1 分支**：
+  `/guideme open @s ae_monitornet:guide`，或在容器界面里对着本模组的物品**按住 G**。1.19.2 与 1.21.1 尚未带指南页面。
 * **JEI / Jade** —— 本模组不自带插件，与它们共存（配方展示由 AE2 自己提供）。
+
+### 已知限制
+
+* 按钮全部由代码绘制（`FlatButton`：两次 `fill` + 居中文字），没有使用 AE2 的九宫格界面精灵，
+  因此按钮的底纹、边框与悬停颜色和原版 AE2 控件不完全一致。
+* 1.21.1（AE2 19.x）上，部分按钮的观感与原版不同，原因同上。
 
 ### 配置
 
@@ -175,9 +243,10 @@ This mod used to be called **AE Throughput Monitor** (mod id `aetm`) and is now 
 Windows 上把 `./gradlew` 换成 `gradlew.bat`（例如 `gradlew.bat build --offline`）。依赖缓存已经齐全、
 不想让 Gradle 联网时，再加 `--offline`。
 
-每个 Minecraft 版本各在一条分支上（`main` / `aetm-1.19.2` = 1.19.2，`aetm-1.20.1` = 1.20.1），切到
-目标分支再构建；1.19.2 分支把 AE2 12.9.9 当普通 Gradle 依赖解析，1.20.1 分支需要把 AE2 15.4.10 的 jar
-放进 `libs/`。
+每个 Minecraft 版本各在一条分支上（`main` / `aetm-1.19.2` = 1.19.2，`aetm-1.20.1` = 1.20.1，`1.21.1` = 1.21.1），切到
+目标分支再构建：1.19.2 分支把 AE2 12.9.9 当普通 Gradle 依赖解析；1.20.1 分支需要把 AE2 15.4.10 的 jar 放进 `libs/`；
+1.21.1 分支用 ModDevGradle + NeoForge 21.1，需要把 AE2 19.2.17、GuideME 21.1.17、AE2WTLib 19.5.1、JEI 与 Jade 的 jar
+放进 `libs/`，并需要 **Java 21**（工具链由 `foojay` 解析器自动下载）。
 
 ### 链接
 
@@ -205,3 +274,7 @@ LGPL-3.0）：1.20.1 版直接使用这些部件，1.19.2 版是同一批部件�
 ### 迁移
 
 本模组原名为 **AE Throughput Monitor**（modid `aetm`），现更名为 **AE MonitorNet**（`ae_monitornet`）；旧 NBT 键仍可读取，旧的 `aetm-server.toml` 需要手动把值抄到 `ae_monitornet-server.toml`。
+
+源码侧也一并改了名：1.20.1 / 1.21.1 分支的包名是 `com.cheesexiaolv.monitornet`、Gradle 工程是 `ae_monitornet`；
+1.19.2 分支仍保留最初的 `com.cheesexiaolv.aetm` 包名，但它的 groupId 与 `rootProject.name` 已经是
+`com.cheesexiaolv.monitornet` / `ae-monitornet`。三条分支的交付 jar 都叫 `ae_monitornet-<version>.jar`。
