@@ -17,7 +17,7 @@ item_ids:
 * **监控器**是一个线缆部件：它盯住网络中的**一种**物品或流体，在自己的面板上画出图标、存量与传输速率；
 * **终端**也是一个线缆部件：它把同一网络上**所有**监控器列成一张表，并能给某一行打开一个浮动曲线窗口。
 
-## ME 吞吐量监控器
+## ME吞吐量监控器
 
 <ItemImage id="ae_monitornet:throughput_monitor" scale="2" />
 <ItemLink id="ae_monitornet:throughput_monitor" />
@@ -39,7 +39,7 @@ item_ids:
 
 源自Advanced AE。
 
-## 高级 ME 吞吐量监控器
+## 高级ME吞吐量监控器
 
 <ItemImage id="ae_monitornet:advanced_throughput_monitor" scale="2" />
 <ItemLink id="ae_monitornet:advanced_throughput_monitor" />
@@ -51,7 +51,7 @@ item_ids:
 
 
 
-## ME 存储监控终端
+## ME存储监控终端
 
 <ItemImage id="ae_monitornet:throughput_terminal" scale="2" />
 <ItemLink id="ae_monitornet:throughput_terminal" />
