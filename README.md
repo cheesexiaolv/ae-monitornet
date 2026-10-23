@@ -68,7 +68,7 @@ with AE2's hotkey system together with the AE2WTLib integration, so it shows up 
 | Minecraft | Loader | AE2 | Optional integrations | Branch |
 |---|---|---|---|---|
 | **1.19.2** | Forge 43 (`[43,44)`) | 12.9.9 | AE2WTLib 12.9.7 (Universal Terminal) | `main` / `aetm-1.19.2` |
-| **1.20.1** | Forge 47 (`[47,)`) | 15.4.10 (`[15.4.10,16)`) | AE2WTLib 15.3.3 (Universal Terminal), GuideME 20.1.x (in-game guide) | `aetm-1.20.1` |
+| **1.20.1** | Forge 47 (`[47,)`) | 15.4.10 (`[15.4.10,16)`) | AE2WTLib 15.3.3 (Universal Terminal), GuideME 20.1.x (in-game guide) | `1.20.1` |
 | **1.21.1** | NeoForge 21.1 (`[21.1.169,)`) | 19.2.17 (`[19.2.17,)`) | AE2WTLib 19.5.1 (Universal Terminal); GuideME 21.1.17 is required by AE2 19.x itself | `1.21.1` |
 
 Java 17 is enough for the two Forge lines; **1.21.1 needs Java 21** (Minecraft 1.21.1 / NeoForge 21.1).
@@ -115,7 +115,7 @@ On Windows use `gradlew.bat` instead of `./gradlew` (for example `gradlew.bat bu
 `--offline` when the Gradle dependency cache is already warm and you do not want Gradle to touch the
 network.
 
-Each Minecraft version lives on its own branch (`main` and `aetm-1.19.2` = 1.19.2, `aetm-1.20.1` =
+Each Minecraft version lives on its own branch (`main` and `aetm-1.19.2` = 1.19.2, `1.20.1` =
 1.20.1, `1.21.1` = 1.21.1); check out the branch you want and build it there. The 1.19.2 branch resolves
 AE2 12.9.9 as a normal Gradle dependency; the 1.20.1 branch expects the AE2 15.4.10 jar in `libs/`; the
 1.21.1 branch builds with ModDevGradle on NeoForge 21.1, expects the AE2 19.2.17, GuideME 21.1.17,
@@ -206,7 +206,7 @@ every branch.
 | Minecraft | 加载器 | AE2 | 可选集成 | 分支 |
 |---|---|---|---|---|
 | **1.19.2** | Forge 43（`[43,44)`） | 12.9.9 | AE2WTLib 12.9.7（通用终端） | `main` / `aetm-1.19.2` |
-| **1.20.1** | Forge 47（`[47,)`） | 15.4.10（`[15.4.10,16)`） | AE2WTLib 15.3.3（通用终端）、GuideME 20.1.x（游戏内指南） | `aetm-1.20.1` |
+| **1.20.1** | Forge 47（`[47,)`） | 15.4.10（`[15.4.10,16)`） | AE2WTLib 15.3.3（通用终端）、GuideME 20.1.x（游戏内指南） | `1.20.1` |
 | **1.21.1** | NeoForge 21.1（`[21.1.169,)`） | 19.2.17（`[19.2.17,)`） | AE2WTLib 19.5.1（通用终端）；GuideME 21.1.17 是 AE2 19.x 自己的必需前置 | `1.21.1` |
 
 两条 Forge 线只要 **Java 17**，**1.21.1 需要 Java 21**（Minecraft 1.21.1 / NeoForge 21.1）；除 AE2 外没有我们自己的硬前置
@@ -245,7 +245,7 @@ every branch.
 Windows 上把 `./gradlew` 换成 `gradlew.bat`（例如 `gradlew.bat build --offline`）。依赖缓存已经齐全、
 不想让 Gradle 联网时，再加 `--offline`。
 
-每个 Minecraft 版本各在一条分支上（`main` / `aetm-1.19.2` = 1.19.2，`aetm-1.20.1` = 1.20.1，`1.21.1` = 1.21.1），切到
+每个 Minecraft 版本各在一条分支上（`main` / `aetm-1.19.2` = 1.19.2，`1.20.1` = 1.20.1，`1.21.1` = 1.21.1），切到
 目标分支再构建：1.19.2 分支把 AE2 12.9.9 当普通 Gradle 依赖解析；1.20.1 分支需要把 AE2 15.4.10 的 jar 放进 `libs/`；
 1.21.1 分支用 ModDevGradle + NeoForge 21.1，需要把 AE2 19.2.17、GuideME 21.1.17、AE2WTLib 19.5.1、JEI 与 Jade 的 jar
 放进 `libs/`，并需要 **Java 21**（工具链由 `foojay` 解析器自动下载）。
