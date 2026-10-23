@@ -2,6 +2,8 @@ package com.cheesexiaolv.monitornet.menu;
 
 import com.cheesexiaolv.monitornet.Items.WirelessTerminalSettings;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
@@ -53,5 +55,18 @@ public class ThroughputTerminalWirelessMenu extends ThroughputTerminalMenu {
      */
     public ItemStack getTerminalStack() {
         return itemMenuHost == null ? ItemStack.EMPTY : itemMenuHost.getItemStack();
+    }
+
+    /**
+     * 本菜单的无线宿主（{@code WirelessTerminalMenuHost} 或其子类）。
+     *
+     * <p>给 xmod 的 WUT 界面用：{@code IUniversalTerminalCapable#getHost()} 要的是
+     * AE2WTLib 的 {@code WTMenuHost}，那个类型只能由 {@code xmod} 包里的类去转
+     * （本类保持"只用 AE2 类型"，软依赖才不会硬绑）。没装 AE2WTLib 时宿主就是 AE2 的
+     * {@code WirelessTerminalMenuHost}，正常返回；只有宿主缺失（理论上的非法菜单）才返回 {@code null}。
+     */
+    @Nullable
+    public WirelessTerminalMenuHost<?> getWirelessMenuHost() {
+        return itemMenuHost instanceof WirelessTerminalMenuHost<?> host ? host : null;
     }
 }

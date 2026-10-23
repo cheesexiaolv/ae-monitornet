@@ -1,6 +1,7 @@
 package com.cheesexiaolv.monitornet;
 
 import com.cheesexiaolv.monitornet.Init.ModItems;
+import com.cheesexiaolv.monitornet.xmod.ae2wtlib.AE2WtLibPlugin;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -59,6 +60,14 @@ public class AeMonitorNet {
     public AeMonitorNet(IEventBus modEventBus, ModContainer modContainer) {
         ModItems.ITEMS.register(modEventBus);
         TABS.register(modEventBus);
+
+        // AE2WTLib (universal terminal) soft hook: must run AFTER our DeferredRegister above so
+        // the AE2WTLib terminal callback is queued on the same mod event bus we are already part
+        // of, and BEFORE any registry event (AE2WTLib collects the terminal callbacks and runs
+        // them once from `ae2wtlib_api`'s ITEM listener; see xmod/ae2wtlib). This only queues a
+        // callback -- it never touches a registry, so it is safe during mod construction.
+        // No-op when AE2WTLib is absent (the `de.mari_023.*` classes are never loaded).
+        AE2WtLibPlugin.registerTerminals();
 
         // Server config: <world>/serverconfig/ae_monitornet-server.toml (hot-reloaded by NeoForge).
         modContainer.registerConfig(ModConfig.Type.SERVER, MonitorNetConfig.SPEC);

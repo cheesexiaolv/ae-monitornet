@@ -70,7 +70,15 @@ dependencies {
     // Soft dependencies, stage 2 of the port (WUT integration / tooltip providers). Kept on the
     // compile classpath so a future plugin class compiles against exactly the jar players use.
     // Also on the runtime classpath so `gradlew runClient` boots a realistic test instance.
+    //
+    // ⚠️ AE2WTLib 19.x keeps its public API in a NESTED jar
+    // (META-INF/jarjar/de.mari_023.ae2wtlib_api-<ver>.jar -- a separate `ae2wtlib_api` mod that
+    // NeoForge unpacks at runtime). javac cannot see through that nesting, so the xmod classes
+    // (de.mari_023.ae2wtlib.api.*) compile against an unpacked copy produced by the
+    // `extractAe2wtlibApi` task below: compile classpath ONLY, because putting that jar on the
+    // runtime classpath as well would load the API mod twice (duplicate mod id).
     compileOnly files("libs/ae2wtlib-${ae2wtlib_version}.jar")
+    compileOnly files(layout.buildDirectory.dir("ae2wtlib-api/META-INF/jarjar/de.mari_023.ae2wtlib_api-${ae2wtlib_version}.jar"))
     runtimeOnly files("libs/ae2wtlib-${ae2wtlib_version}.jar")
     compileOnly files("libs/jei-1.21.1-neoforge-${jei_version}.jar")
     runtimeOnly files("libs/jei-1.21.1-neoforge-${jei_version}.jar")
@@ -82,6 +90,23 @@ dependencies {
     runtimeOnly files("libs/architectury-13.0.8-neoforge.jar")
     runtimeOnly files("libs/cloth-config-15.0.140-neoforge.jar")
     runtimeOnly files("libs/curios-neoforge-9.5.1+1.21.1.jar")
+}
+
+/**
+ * Unpacks AE2WTLib's nested (jar-in-jar) API jar into build/ae2wtlib-api so javac can resolve
+ * `de.mari_023.ae2wtlib.api.*`. The extracted file is a build output only: libs/*.jar remains the
+ * single source of truth for the version actually shipped, and the API mod still comes from
+ * AE2WTLib's own jar-in-jar at runtime.
+ */
+def extractAe2wtlibApi = tasks.register('extractAe2wtlibApi', Copy) {
+    from(zipTree(file("libs/ae2wtlib-${ae2wtlib_version}.jar"))) {
+        include "META-INF/jarjar/de.mari_023.ae2wtlib_api-${ae2wtlib_version}.jar"
+    }
+    into layout.buildDirectory.dir('ae2wtlib-api')
+}
+
+tasks.named('compileJava').configure {
+    dependsOn extractAe2wtlibApi
 }
 
 tasks.named('processResources', ProcessResources).configure {

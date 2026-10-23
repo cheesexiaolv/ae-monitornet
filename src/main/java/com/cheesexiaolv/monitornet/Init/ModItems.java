@@ -6,6 +6,8 @@ import com.cheesexiaolv.monitornet.Items.WirelessThroughputTerminalItem;
 import com.cheesexiaolv.monitornet.Parts.AdvancedThroughputMonitorPart;
 import com.cheesexiaolv.monitornet.Parts.ThroughputMonitorPart;
 import com.cheesexiaolv.monitornet.Parts.ThroughputTerminalPart;
+import com.cheesexiaolv.monitornet.xmod.ae2wtlib.AE2WtLibHook;
+import com.cheesexiaolv.monitornet.xmod.ae2wtlib.AE2WtLibPlugin;
 import appeng.items.parts.PartItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
@@ -101,10 +103,52 @@ public class ModItems {
                     ));
 
     // 5. wireless storage monitoring terminal: shares the wired menu/screen; linking and power drain
-    //    use AE2's wireless-terminal mechanics. Registered with the AE2-only base class for now; the
-    //    AE2WTLib universal-terminal subclass (1.20.1 `xmod/ae2wtlib`) is part of the later WUT stage.
-    //    Its GridLinkable handler is registered by CommonEvents (net-menus).
+    //    use AE2's wireless-terminal mechanics.
+    //
+    //    ⚠️ 1.21.1, two constraints meet here:
+    //    (a) An `Item` instance may NOT be created during mod construction: NeoForge's `Item`
+    //        constructor calls `Registry#createIntrusiveHolder`, and the vanilla ITEM registry is
+    //        frozen outside its RegisterEvent (Measured: constructing one in the @Mod constructor
+    //        aborts startup with `IllegalStateException: Registry is already frozen`).
+    //    (b) AE2WTLib 19.5.1's terminal registration needs the *item instance* while that very
+    //        ITEM event is running (`WTDefinition` holds an `ItemWT`; there is no "swap the item
+    //        in later" hook), and our DeferredRegister's listener may run before OR after
+    //        `ae2wtlib_api`'s listener that actually fires the registration.
+    //    So the instance is created lazily and memoized: whichever side asks first builds it
+    //    (both run inside the unfrozen ITEM event), and the other side reuses it.
+    //
+    //    Which class is used is decided by createWirelessTerminal(): with AE2WTLib present it is
+    //    `xmod.ae2wtlib.UniversalThroughputTerminalItem` (extends AE2WTLib's `ItemWT`), otherwise
+    //    the AE2-only base class. Same registry id either way, so recipes/saves are unaffected.
+    private static Item wirelessTerminal;
+
+    /**
+     * The wireless terminal item instance (created on first call, always the same object).
+     *
+     * <p>Called by the DeferredRegister lambda below and by {@code AE2WtLibHook}'s terminal
+     * registration; both run during the ITEM registry event, where item construction is legal.
+     */
+    public static Item wirelessTerminal() {
+        if (wirelessTerminal == null) {
+            wirelessTerminal = createWirelessTerminal();
+        }
+        return wirelessTerminal;
+    }
+
     public static final DeferredHolder<Item, Item> WIRELESS_THROUGHPUT_TERMINAL =
-            ITEMS.register("wireless_throughput_terminal",
-                    () -> new WirelessThroughputTerminalItem(new Item.Properties().stacksTo(1)));
+            ITEMS.register("wireless_throughput_terminal", ModItems::wirelessTerminal);
+
+    /**
+     * 无线终端物品的工厂：装了 AE2WTLib 就用它的通用终端子类（{@code ItemWT}），否则用不依赖它的基类。
+     *
+     * <p>⚠️ 软依赖不能硬 import：子类的全限定名只出现在 {@code AE2WtLibHook} 里，而那个类
+     * 只有在 {@link AE2WtLibPlugin#isLoaded()} 为真时才会被 JVM 解析/加载。
+     * 没装 AE2WTLib 的整合包里 {@code de.mari_023.*} 一次都不会被碰到。
+     */
+    private static Item createWirelessTerminal() {
+        if (AE2WtLibPlugin.isLoaded()) {
+            return AE2WtLibHook.createUniversalTerminalItem();
+        }
+        return new WirelessThroughputTerminalItem(new Item.Properties().stacksTo(1));
+    }
 }

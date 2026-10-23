@@ -364,12 +364,12 @@ runtimeOnly files("libs/appliedenergistics2-${ae2_version}.jar")
 | 37 | `client/gui/TerminalWindow.java` | 610 | ⏭ | 拖拽窗口逻辑自绘，主要核对 `GuiGraphics`/事件签名 |
 | 38 | `client/gui/ThroughputTerminalScreen.java` | 817 | ⏭ | 最大文件；`InitScreens` 注册方式改变（§3.13） |
 | 39 | `client/gui/WirelessThroughputTerminalScreen.java` | 22 | ⏭ | 无线版薄壳 |
-| 40 | `xmod/ae2wtlib/AE2WtLibPlugin.java` | 58 | ⏭ | WUT 注册（热键窗口，1.20.1 的时序结论需在 19.5.1 复核） |
-| 41 | `xmod/ae2wtlib/AE2WtLibHook.java` | 235 | ⏭ | `WUTHandler`/`WTMenuHost` 反射；AE2WTLib 19.5.1 反编译已就绪 |
-| 42 | `xmod/ae2wtlib/AE2WtLibClientHook.java` | 30 | ⏭ | 屏幕注册 |
-| 43 | `xmod/ae2wtlib/UniversalThroughputTerminalItem.java` | 55 | ⏭ | 实现 `IUniversalWirelessTerminalItem` |
-| 44 | `xmod/ae2wtlib/ThroughputTerminalWirelessMenuHost.java` | 49 | ⏭ | `WTMenuHost` 子类 |
-| 45 | `xmod/ae2wtlib/WutThroughputTerminalScreen.java` | 57 | ⏭ | 感知 WUT 的屏幕 |
+| 40 | `xmod/ae2wtlib/AE2WtLibPlugin.java` | 58 | ✅ | 软依赖入口（无 `de.mari_023.*` 类型）；`isLoaded()` + 构造器里 `registerTerminals()` |
+| 41 | `xmod/ae2wtlib/AE2WtLibHook.java` | 235 | ✅ | 19.5.1 改成 `AddTerminalEvent` + `WTDefinitionBuilder`（见 §8）；物品是 `ItemWT` 子类 |
+| 42 | `xmod/ae2wtlib/AE2WtLibClientHook.java` | 30 | ✅ | `RegisterMenuScreensEvent` 里换 WUT 屏幕 |
+| 43 | `xmod/ae2wtlib/UniversalThroughputTerminalItem.java` | 55 | ✅ | `extends de.mari_023.ae2wtlib.api.terminal.ItemWT`（旧接口已删）；`getMenuType` 两版都指向本菜单 |
+| 44 | `xmod/ae2wtlib/ThroughputTerminalWirelessMenuHost.java` | 49 | ✅ | `WTMenuHost` 子类；`getMainMenuIcon` = 有线终端零件 |
+| 45 | `xmod/ae2wtlib/WutThroughputTerminalScreen.java` | 57 | ✅ | `IUniversalTerminalCapable`（`cycleTerminalButton()` / `getHost()` / 热键切换） |
 
 **统计（45 个文件）**：✅ 已移植 15（`ModItems` 只完成 2/5 个物品）；⏭ 待机械改 25；🔁 待重写 3（`AetmNetwork`、
 `TerminalRowsPacket`、`TerminalClientPackets`）；🧱 可直接平移 2（`TerminalRow`、`ChartMath`）。
@@ -403,8 +403,7 @@ runtimeOnly files("libs/appliedenergistics2-${ae2_version}.jar")
    需要再取一份 1.21.1 配方条件实例核对——AE2 自身的配方没有用条件）。
 5. **GuideME 指南**：`Guide.builder(...).folder("ae2guide")` 注册 + 迁移 `assets/ae_monitornet/guides/ae_monitornet/guide/**`
    → `assets/ae_monitornet/ae2guide/**`（或保留默认 folder）；删除/确认 `guideme_guides/guide.json`。
-6. **AE2WTLib（WUT）集成**：3 个 xmod 类 + 无线菜单/屏幕；运行期需要 cloth-config/architectury/curios jar 才能
-   `runClient`（当前 `libs/` 没有）。
+6. ~~**AE2WTLib（WUT）集成**~~ —— ✅ 已完成（19.5.1 API，见 §8）。
 7. **JEI/Jade 集成**：本模组无自建插件（集成在 AE2 侧 + 我们两个 Igtooltip 提供者），只需把两个提供者按 19.2 API 复核。
 
 ---
@@ -417,3 +416,47 @@ runtimeOnly files("libs/appliedenergistics2-${ae2_version}.jar")
 - 数据包目录仍是 1.20.1 的复数形式 → 配方/成就在 1.21.1 不加载。
 
 版本号已按要求设为 `1.2.0`（1.21.1 线起始），但**不要**把本阶段产物作为 release 上传。
+
+---
+
+## 8. xmod / AE2WTLib 19.5.1 移植记录（WUT 通用终端）
+
+**结论**：终端 id `throughput` 已登记，`ae2wtlib:upgrade` / `ae2wtlib:combine` 四条配方从"解析失败"
+（`JsonParseException: WTDefinition throughput does not exist`，旧日志里固定 4 条）变为正常加载 ——
+专用服务器实测 `Loaded 1802 recipes`（= 旧客户端世界 `1798` + 这 4 条），零 parse error。
+
+### 8.1 19.5.1 的 API 全变了（与 1.20.1 的 15.3.3 不兼容）
+
+| 15.3.3（1.20.1 蓝本） | 19.5.1（本分支） |
+|---|---|
+| `WUTHandler.addTerminal(name, open, hostFactory, menuType, item, displayNameKey)` | `AddTerminalEvent.register(handler)`，回调里 `event.builder(name, hostFactory, menuType, ItemWT, Icon).addTerminal()` |
+| `WUTHandler.wirelessTerminals` / `terminalNames` | `WTDefinition.wirelessTerminals()` / `exists(name)` / `of(name)`（`WTDefinition` 是 record，带 `Codec`/`StreamCodec`） |
+| 物品实现 `IUniversalWirelessTerminalItem` | 物品**继承** `ItemWT`（接口已删） |
+| `WTMenuHost(player, slot, stack, returnToMain)` | `WTMenuHost(ItemWT, Player, ItemMenuHostLocator, BiConsumer<Player, ISubMenu>)` |
+| `CycleTerminalButton` | `IUniversalTerminalCapable#cycleTerminalButton()`（选择盘，非轮换） |
+| API 在 `ae2wtlib` jar 根部 | API 在**嵌套 jar** `META-INF/jarjar/de.mari_023.ae2wtlib_api-19.5.1.jar`（独立 mod `ae2wtlib_api`） |
+
+- 编译期：`build.gradle` 新增 `extractAe2wtlibApi`（Copy + `zipTree`）把嵌套 jar 解到
+  `build/ae2wtlib-api/`，**只放 compileOnly**（放运行期会重复加载 `ae2wtlib_api`）。
+- 运行时：NeoForge 自己解嵌套 jar；`libs/ae2wtlib-19.5.1.jar` 就够，无需额外文件。
+
+### 8.2 两个时序约束（实测，踩过）
+
+1. **注册回调必须在 mod 构造器里挂上**：`AddTerminalEvent` 是一次性的 —— `ae2wtlib_api` 的
+   `AE2wtlibAPIEntrypoint` 在物品注册事件里 `run()` 一次，之后 `register(...)` 抛
+   `IllegalStateException`。mods.toml 里 `ordering="BEFORE"` 的语义是"**本 mod 先加载**"，
+   所以加载序是 `ae2 → ae2wtlib → ae2wtlib_api`；我们在构造器里排队即可，与两者的监听器顺序无关。
+   顺带：热键也在同一时刻登记，**不需要** 1.20.1 的"提前占热键 id"（那是 commonSetup 才登记的代价）。
+2. **物品不能在 mod 构造期 `new`**：NeoForge 的 `Item` 构造器会 `Registry#createIntrusiveHolder`，
+   而原版物品注册表在注册事件之外是冻结的 —— 实测直接在 `@Mod` 构造器里创建会以
+   `IllegalStateException: Registry is already frozen` 中止启动。
+   因此 `ModItems#wirelessTerminal()` 用**记忆化惰性工厂**：DeferredRegister 的 lambda 与
+   AE2WTLib 回调谁先跑谁创建，另一边复用同一实例（两者都在解冻的物品注册事件内）。
+
+### 8.3 降级行为（没装 AE2WTLib）
+
+- 物品退回 `WirelessThroughputTerminalItem`（只依赖 AE2），`xmod` 六个类一次都不会被类加载；
+- 四条 `ae2wtlib:*` 配方被 `neoforge:mod_loaded` 条件挡掉；
+- 屏幕退回 `WirelessThroughputTerminalScreen`（无"切换终端"按钮）；
+- 握手失败（`AddTerminalEvent` 已 run / id 被占 / 物品类型不符）只记 WARN，不崩启动；
+  物品自身仍可打开（`UniversalThroughputTerminalItem#getMenuHost` 在定义缺失时直接造我们的宿主）。

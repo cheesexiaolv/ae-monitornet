@@ -9,6 +9,8 @@ import com.cheesexiaolv.monitornet.menu.AdvancedThroughputMonitorMenu;
 import com.cheesexiaolv.monitornet.menu.ThroughputTerminalMenu;
 import com.cheesexiaolv.monitornet.menu.ThroughputTerminalWirelessMenu;
 import com.cheesexiaolv.monitornet.network.MonitorNetNetwork;
+import com.cheesexiaolv.monitornet.xmod.ae2wtlib.AE2WtLibClientHook;
+import com.cheesexiaolv.monitornet.xmod.ae2wtlib.AE2WtLibPlugin;
 
 import appeng.api.util.AEColor;
 import appeng.init.client.InitScreens;
@@ -107,13 +109,17 @@ public class ClientEvents {
                 ThroughputTerminalScreen::new,
                 "/screens/throughput_terminal.json");
         // 无线版复用同一份样式（版式完全一致，只是菜单类型不同）。
-        // ⚠️ AE2WTLib（通用无线终端）集成是第 3 阶段，1.21.1 暂不接 xmod 的「感知通用终端」界面：
-        // 这里先注册普通薄壳版，AE2WTLib 移植时再按 1.20.1 的 ModList 判定切到 WUT 屏幕。
-        InitScreens.register(
-                event,
-                ThroughputTerminalWirelessMenu.TYPE,
-                WirelessThroughputTerminalScreen::new,
-                "/screens/throughput_terminal.json");
+        // 装了 AE2WTLib 时换成「感知通用终端」的界面（左侧多一个"切换终端"按钮 + 热键切换）；
+        // 没装时用普通薄壳版 —— xmod 的类只有确认装了 mod 才会被加载（软依赖不能硬 import）。
+        if (AE2WtLibPlugin.isLoaded()) {
+            AE2WtLibClientHook.registerWirelessTerminalScreen(event);
+        } else {
+            InitScreens.register(
+                    event,
+                    ThroughputTerminalWirelessMenu.TYPE,
+                    WirelessThroughputTerminalScreen::new,
+                    "/screens/throughput_terminal.json");
+        }
 
         // 屏幕注册失败同样是"静默"的（菜单能开、但没有任何屏幕 → 客户端看不到界面，日志无痕），
         // 所以像 PartModelsRegistration / 指南那样留一行启动日志作为"登记确实发生过"的直接证据。
