@@ -63,7 +63,7 @@ item_ids:
 **双击某一行**即可打开（或关掉）该行的浮动曲线子窗口。子窗口可以按住标题栏拖动，自己的按钮有：
 时间窗口、指标（存量 / 流量 / 加速度）、流体行的大小单位（mB / B），以及「定位」——把该监控器在世界里高亮出来。
 
-## 无线 ME 存储监控终端
+## 无线ME存储监控终端
 
 <ItemImage id="ae_monitornet:wireless_throughput_terminal" scale="2" />
 <ItemLink id="ae_monitornet:wireless_throughput_terminal" />
