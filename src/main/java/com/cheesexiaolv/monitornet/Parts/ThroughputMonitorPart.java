@@ -9,6 +9,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -26,9 +27,11 @@ import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.util.AEColor;
 import appeng.client.render.BlockEntityRenderHelper;
+import appeng.core.AELog;
 import appeng.core.AppEng;
 import appeng.hooks.ticking.TickHandler;
 import appeng.parts.PartModel;
@@ -86,6 +89,20 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
 
     // Sampling cache size: Advanced AE's default (throughputMonitorCacheSize = 80)
     private static final int CACHE_SIZE = 80;
+
+    /**
+     * Mod-owned copy of the monitored key (written by {@link #writeToNBT}).
+     *
+     * <p>AE2's {@code AbstractMonitorPart} already persists the key as {@code "configuredItem"}
+     * through {@code AEKey#toTagGeneric(HolderLookup.Provider)}
+     * (AE2 19.2.17 {@code appeng/parts/reporting/AbstractMonitorPart.java:94-100}); that field stays
+     * the primary and remains fully backwards compatible. This second copy makes
+     * {@code writeToNBT}/{@code readFromNBT} symmetric for this part on its own: the base class'
+     * key field is private, so if AE2's tag is missing (saves written by builds that predate the
+     * 1.21 port, or a future AE2 that stops writing it) the part would silently come back with no
+     * monitored object. The copy is only read when AE2's own field did not restore a key.
+     */
+    private static final String TAG_KEY = "monitornetKey";
 
     private final ThroughputCache cache = new ThroughputCache(CACHE_SIZE);
     protected double lastReportedValue = 0;
@@ -153,6 +170,7 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     @Override
     public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
         super.writeToNBT(data, registries);
+        writeConfiguredKey(data, registries);
         data.putDouble("lastValue", this.lastReportedValue);
         data.putString("throughput", this.lastHumanReadableValue);
         data.putInt("routine", this.workRoutine.ordinal());
@@ -161,9 +179,61 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     @Override
     public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
         super.readFromNBT(data, registries);
+        restoreConfiguredKey(data, registries);
         this.lastReportedValue = data.getDouble("lastValue");
         this.lastHumanReadableValue = data.getString("throughput");
         this.workRoutine = WorkRoutine.fromInt(data.getInt("routine"));
+    }
+
+    /**
+     * Persist the monitored key a second time under {@link #TAG_KEY}.
+     *
+     * <p>A key that cannot be encoded must never abort a world save (that would lose a whole chunk
+     * instead of one field), so failures only log.
+     */
+    private void writeConfiguredKey(CompoundTag data, HolderLookup.Provider registries) {
+        var key = getDisplayed();
+        if (key == null) {
+            data.remove(TAG_KEY);
+            return;
+        }
+        try {
+            data.put(TAG_KEY, key.toTagGeneric(registries));
+        } catch (RuntimeException e) {
+            data.remove(TAG_KEY);
+            AELog.warn("AE MonitorNet: could not persist the monitored key of %s: %s", this, e);
+        }
+    }
+
+    /**
+     * Fallback read of {@link #TAG_KEY}: only used when AE2's own {@code configuredItem} did not
+     * restore a key (tag absent, or present but not decodable). Re-arms the watchers so the readout
+     * resumes with the restored object.
+     */
+    private void restoreConfiguredKey(CompoundTag data, HolderLookup.Provider registries) {
+        if (getDisplayed() != null || !data.contains(TAG_KEY, Tag.TAG_COMPOUND)) {
+            return;
+        }
+
+        AEKey restored = null;
+        try {
+            restored = AEKey.fromTagGeneric(registries, data.getCompound(TAG_KEY));
+        } catch (RuntimeException e) {
+            AELog.warn("AE MonitorNet: could not read the monitored key of %s: %s", this, e);
+        }
+
+        if (restored == null) {
+            AELog.warn("AE MonitorNet: monitored key of %s could not be decoded (tag: %s); the part "
+                    + "starts without a monitored object", this, data.getCompound(TAG_KEY));
+            return;
+        }
+
+        // setConfiguredItem() marks the host for a client update, so it needs an attached host;
+        // when the part is loaded from disk the host is always set before readFromNBT runs.
+        if (getHost() != null) {
+            setConfiguredItem(restored);
+            configureWatchers();
+        }
     }
 
     @Override

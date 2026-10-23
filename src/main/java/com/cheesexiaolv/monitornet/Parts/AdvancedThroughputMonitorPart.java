@@ -14,6 +14,7 @@ import appeng.util.ConfigInventory;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -50,6 +51,22 @@ import net.minecraft.world.phys.Vec3;
  */
 public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart implements IAdvancedThroughputMonitorHost {
 
+    /**
+     * NBT name of the config slot. AE2's own level emitter persists its slot exactly this way
+     * ({@code StorageLevelEmitterPart#writeToNBT} ->
+     * {@code appeng/parts/automation/StorageLevelEmitterPart.java:240-243}).
+     *
+     * <p>The slot used to be reconstructed only from AE2's {@code configuredItem}, so it had no
+     * persistent state of its own. Writing it makes {@code writeToNBT}/{@code readFromNBT} truly
+     * symmetric; saves from before this change still load through the {@code configuredItem}
+     * fallback in {@link #readFromNBT}.
+     */
+    private static final String TAG_CONFIG = "monitornetConfig";
+
+    /** Chart settings (lost on every restart before they were persisted). */
+    private static final String TAG_CHART_WINDOW = "chartWindow";
+    private static final String TAG_CHART_METRIC = "chartMetric";
+
     private final ConfigInventory config = ConfigInventory.configTypes(1)
             .changeListener(this::onConfigChanged)
             .build();
@@ -67,6 +84,13 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     private ThroughputHistory.Metric chartMetric = ThroughputHistory.Metric.RATE;
 
     private boolean fluidUnitB;
+
+    /**
+     * {@code true} while {@link #readFromNBT} restores state: the config slot's change listener
+     * fires during that restore, and a load must not mark the chunk as modified (it would defeat
+     * the point of the dirty-flag check that decides whether the chunk is written at all).
+     */
+    private boolean restoring;
 
     public AdvancedThroughputMonitorPart(IPartItem<?> partItem) {
         super(partItem);
@@ -120,7 +144,7 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     @Override
     public void cycleChartWindow() {
         this.chartWindow = this.chartWindow.next();
-        getHost().markForUpdate();
+        markSettingsChanged();
     }
 
     @Override
@@ -131,7 +155,7 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     @Override
     public void cycleChartMetric() {
         this.chartMetric = this.chartMetric.next();
-        getHost().markForUpdate();
+        markSettingsChanged();
     }
 
     @Override
@@ -208,17 +232,47 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
     public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
         super.writeToNBT(data, registries);
         data.putBoolean("fluidUnitB", this.fluidUnitB);
+        data.putInt(TAG_CHART_WINDOW, this.chartWindow.ordinal());
+        data.putInt(TAG_CHART_METRIC, this.chartMetric.ordinal());
+        // The config slot is persisted in its own right, exactly like AE2's level emitter does it.
+        this.config.writeToChildTag(data, TAG_CONFIG, registries);
     }
 
     @Override
     public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
-        super.readFromNBT(data, registries);
-        this.fluidUnitB = data.getBoolean("fluidUnitB");
-        // Config slot persistence: `configuredItem` is already persisted by the superclass; after
-        // reading it back, sync the config slot display with the restored monitored object.
-        var displayed = getDisplayed();
-        if (displayed != null) {
-            this.config.setStack(0, new GenericStack(displayed, 1));
+        this.restoring = true;
+        try {
+            // Restores AE2's configuredItem (plus the mod-owned fallback key, see the superclass).
+            super.readFromNBT(data, registries);
+
+            this.fluidUnitB = data.getBoolean("fluidUnitB");
+            // Old saves (<= the version before this fix) have no chart settings: keep the defaults
+            // instead of clamping them to ordinal 0.
+            if (data.contains(TAG_CHART_WINDOW)) {
+                this.chartWindow = ThroughputHistory.Window.byOrdinal(data.getInt(TAG_CHART_WINDOW));
+            }
+            if (data.contains(TAG_CHART_METRIC)) {
+                this.chartMetric = ThroughputHistory.Metric.byOrdinal(data.getInt(TAG_CHART_METRIC));
+            }
+
+            // 1) Current saves: the slot itself. Only read when the list really contains a slot --
+            //    readFromChildTag() clears the inventory for an empty/absent list, which would wipe
+            //    the key that was just restored above.
+            if (data.contains(TAG_CONFIG, Tag.TAG_LIST)
+                    && !data.getList(TAG_CONFIG, Tag.TAG_COMPOUND).isEmpty()) {
+                this.config.readFromChildTag(data, TAG_CONFIG, registries);
+            }
+
+            // 2) Saves from before the slot was persisted: AE2's "configuredItem" was the only copy
+            //    -> mirror it into the slot so the GUI shows the monitored object again.
+            if (this.config.getKey(0) == null) {
+                var displayed = getDisplayed();
+                if (displayed != null) {
+                    this.config.setStack(0, new GenericStack(displayed, 1));
+                }
+            }
+        } finally {
+            this.restoring = false;
         }
     }
 
@@ -233,8 +287,15 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
         // The unit/value on the panel changes -> bypass the base class's "broadcast only when the
         // content changed" collapse so the next tick always broadcasts.
         invalidateBroadcastCache();
-        getHost().markForSave();
-        getHost().markForUpdate();
+        markSettingsChanged();
+    }
+
+    /** Persisted GUI settings changed: the host must be re-saved, not only re-synced. */
+    private void markSettingsChanged() {
+        if (getHost() != null) {
+            getHost().markForSave();
+            getHost().markForUpdate();
+        }
     }
 
     /**
@@ -247,6 +308,13 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
      */
     private void onConfigChanged() {
         var key = this.config.getKey(0);
+
+        // The change listener also fires while readFromNBT restores the slot, and a detached part
+        // (no host, e.g. during the in-game self check) must not touch the host at all.
+        if (getHost() == null) {
+            return;
+        }
+
         setConfiguredItem(key);
 
         // After switching the monitored object the watchers must watch the new one immediately
@@ -256,6 +324,16 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
         clearSampleCache();
         // Different monitored object -> restart the history curve from scratch
         this.history.clear();
+
+        // ⚠️ Root cause of "the monitored object is gone after a restart": the config slot is
+        // persisted data, so a change must mark the HOST for a save -- markForUpdate() alone only
+        // re-syncs clients. Minecraft 1.21.1 writes a chunk at shutdown only if it is dirty
+        // (MinecraftServer#stopServer -> saveAllChunks(..., forced=false) -> ChunkMap#save returns
+        // early for chunks that are not unsaved), so the key stayed in memory and the part came
+        // back without a monitored object.
+        if (!this.restoring) {
+            getHost().markForSave();
+        }
         getHost().markForUpdate();
     }
 }
