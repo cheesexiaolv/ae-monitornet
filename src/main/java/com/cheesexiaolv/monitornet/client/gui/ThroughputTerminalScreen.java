@@ -29,8 +29,9 @@ import appeng.client.gui.widgets.SettingToggleButton;
  * 聚合吞吐终端的客户端界面。
  *
  * <p>版式对齐 AE2 官方终端：面板 <b>195 宽</b>（AE 标准宽度），左侧工具栏放"短/中/长"终端尺寸切换
- * （{@code Settings.TERMINAL_STYLE}，改的是可见行数），列表右侧是滚动条轨道（轨道由本屏幕自绘，
- * 滑块用 AE2 的 {@link Scrollbar}），底部 97px 玩家背包（底部块只有 175 宽，滑槽列从列表右侧凸出来）。
+ * （{@code Settings.TERMINAL_STYLE}，改的是可见行数），列表右侧是滚动条列（轨道烘焙在贴图里，
+ * 滑块用 AE2 19.2 的 {@link Scrollbar} + {@code ae2:big_scroller} GUI atlas 精灵），
+ * 底部 96px 玩家背包（底部块只有 175 宽，滑槽列从列表右侧凸出来）。
  *
  * <p><b>主界面只有行列式列表</b>（每行：图标 / 名称 / 存量 / 速率）。
  * 曲线不再占主界面，而是每个浮动子窗口（{@link TerminalWindow}）自己画。
@@ -49,8 +50,22 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
 
     // ---- 面板尺寸（与贴图切块一致）----
     private static final int GUI_WIDTH = 195;
-    private static final int HEADER_H = 34;
-    private static final int FOOTER_H = 97;
+    /**
+     * 头部块高度 = 贴图 v0..34（35 行）。
+     *
+     * <p>⚠️ <b>必须是 35，不能是 34</b>：贴图第 34 行（0 基）是 header 与列表之间的 1px 过渡行，
+     * 滚动条列最上面那 6×1 像素（x=178..183 的 242 高光边）就落在这一行。旧值 34 让 header
+     * 只贴 v0..33，而 firstRow 切片从 v35 起贴到屏幕 y=34 —— 贴图第 34 行被整行跳过、第 35 行
+     * 被画到 y=34，滚动条列顶部看起来就像被 UI 覆盖掉/错位了一行。
+     */
+    private static final int HEADER_H = 35;
+    /**
+     * 底部块高度 = 贴图 v89..184（96 行）。
+     *
+     * <p>⚠️ 贴图第 88 行是列表最后一行自带的底边（242 高光），已经由 lastRow 切片（v71..88）
+     * 画过一次；底部块若仍从 v88 起贴，这一行会被画两次 → 列表与背包之间多一条 2px 白边。
+     */
+    private static final int FOOTER_H = 96;
     /**
      * 底部按钮条高度：<b>已经是 0</b>。
      *
@@ -62,16 +77,16 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
 
     /** 贴图里头部块的 y。 */
     private static final int TEX_HEADER_Y = 0;
-    /** 列表第一行切片 y（18 行）。 */
+    /** 列表第一行切片 y（18 行）：贴图第 35 行是列表顶边，第 34 行属于 header。 */
     private static final int TEX_FIRST_ROW_Y = 35;
     /** 列表中间行切片 y（18 行，每个可见行重复贴一次）。 */
     private static final int TEX_ROW_Y = 53;
-    /** 列表最后一行切片 y（18 行）。 */
+    /** 列表最后一行切片 y（18 行，v71..88）。 */
     private static final int TEX_LAST_ROW_Y = 71;
-    /** 贴图里底部块的 y（背包区，195 宽 × 97 行）。 */
-    private static final int TEX_FOOTER_Y = 88;
+    /** 贴图里底部块的 y：88 是列表底边（已含在 lastRow 里），背包从 89 起。 */
+    private static final int TEX_FOOTER_Y = 89;
     private static final int LIST_X = 8;
-    /** 列表宽度：右边界 172（滚动条列 x 173…188，滑块位置由样式 JSON 的 widgets.scrollbar 给）。 */
+    /** 列表宽度：右边界 172（滚动条列 x 178…183，滑块位置由样式 JSON 的 widgets.scrollbar 给）。 */
     private static final int LIST_W = 164;
 
     /**
@@ -97,7 +112,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     private static final int ROW_W = 162;
 
     // ---- 头部第二行的全局速率单位按钮（底部条已删除）----
-    /** 头部第二行的 y：标题在 y=6，这一行占 18..31，仍在 HEADER_H=34 之内（y=32/33 是头部块下沿）。 */
+    /** 头部第二行的 y：标题在 y=6，这一行占 18..31，仍在 HEADER_H=35 之内（y=33/34 是头部块下沿）。 */
     private static final int GLOBAL_BTN_Y = 18;
     private static final int GLOBAL_BTN_W = 34;
     private static final int GLOBAL_BTN_H = 14;
@@ -146,8 +161,15 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
             ScreenStyle style) {
         super(menu, playerInventory, title, style);
         this.imageWidth = GUI_WIDTH;
-        // 滚动条按样式 JSON 的 widgets.scrollbar 定位（必须在 init() 之前注册）
-        this.scrollbar = this.widgets.addScrollBar("scrollbar");
+        // 滚动条按样式 JSON 的 widgets.scrollbar 定位（必须在 init() 之前注册）。
+        //
+        // AE2 19.2 把滚动条材质换成了 GUI atlas 精灵（ae2:big_scroller / ae2:small_scroller，
+        // 以及 *_disabled），不再有 guis/ 下的旧滚动条贴图。Scrollbar.DEFAULT 仍是原版
+        // minecraft:container/creative_inventory/scroller（12×15 的白/灰材质），铺在本面板的
+        // 242/173/154 灰蓝调上会像一块“白块”——这正是旧版看起来像被 UI 算法盖住的原因。
+        // 这里用 BIG：与 AE2 自己的 PatternAccessTermScreen 一致，尺寸同为 12×15，
+        // 样式 JSON 的 175/35 位置与 setHeight(...) 都不用动。
+        this.scrollbar = this.widgets.addScrollBar("scrollbar", Scrollbar.BIG);
 
         // AE 终端的"灵魂"：左侧工具栏的短/中/长终端尺寸切换。
         //
