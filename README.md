@@ -100,9 +100,14 @@ The ME throughput monitor parts come from
 [AdvancedAE](https://github.com/pedroksl/AdvancedAE) by Pedroksl (LGPL-3.0): the 1.20.1 build uses them
 as they are, and the 1.19.2 build is a port of the same parts. The advanced monitor's sampling history,
 the line chart, the terminals and their chart windows are this project's own work. All part and item
-faces are referenced straight out of AE2's own resources (`ae2:part/...`, `ae2:item/...`); the only
-textures this mod ships are the two terminal light layers it draws itself
-(`part/terminal_front_medium.png`, `part/terminal_front_bright.png`) plus its own configurator icon.
+faces are referenced straight out of AE2's own resources (`ae2:part/...`, `ae2:item/...`); every
+texture this mod ships is its own art: the three terminal light layers
+(`part/terminal_front_medium.png`, `part/terminal_front_bright.png`,
+`part/terminal_front_dark.png`), the optional front plate `part/panel_front_base.png`
+(kept for later use, not referenced by any model yet), its configurator icon, and the three GUI
+backgrounds for the monitor screen, the terminal and the chart window
+(`assets/ae2/textures/guis/ae_monitornet_*.png`, kept in the `ae2` namespace because AE2
+resolves style textures from there only).
 See `NOTICE.txt` for the full attribution list and for what is derived vs. original.
 
 ### Note on authorship
@@ -188,8 +193,11 @@ Windows 上把 `./gradlew` 换成 `gradlew.bat`（例如 `gradlew.bat build --of
 ME吞吐量监控器系列部件来自 [AdvancedAE](https://github.com/pedroksl/AdvancedAE)（作者 Pedroksl，
 LGPL-3.0）：1.20.1 版直接使用这些部件，1.19.2 版是同一批部件的向下移植。高级监控器的采样历史、
 折线图、终端及其曲线子窗口是本项目自己的实现。部件与物品的外观一律直接引用 AE2 自己的贴图
-（`ae2:part/...`、`ae2:item/...`）；本模组自带的贴图只有它自己画的两层终端高亮
-（`part/terminal_front_medium.png`、`part/terminal_front_bright.png`）和配置器图标。完整的署名列表、
+（`ae2:part/...`、`ae2:item/...`）；本模组自带的贴图全部是自己画的：三层终端高亮
+（`part/terminal_front_medium.png`、`part/terminal_front_bright.png`、`part/terminal_front_dark.png`）、
+可选底板 `part/panel_front_base.png`（留作后续使用，当前没有模型引用）、配置器图标，以及监控器界面、
+终端和曲线窗口三张界面底图（`assets/ae2/textures/guis/ae_monitornet_*.png`，放在 `ae2`
+命名空间是因为 AE2 只从那里解析界面贴图）。完整的署名列表、
 以及"哪些是移植、哪些是原创"的划分见 `NOTICE.txt`。
 
 ### 关于代码来源
