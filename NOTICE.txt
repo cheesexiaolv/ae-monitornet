@@ -21,12 +21,17 @@ history, unit derivation, chart and the terminal UI) is our own implementation.
    Used as: required dependency and API surface (parts, grid services, menus,
    screens, widgets, storage watchers). No AE2 source file is copied into this
    mod; AE2 is compiled against, never bundled.
-   Also: the part-face and terminal textures under
-   assets/ae_monitornet/textures/ (terminal_front*, monitor_front*,
-   item/wireless_terminal) are unmodified copies of the matching AE2 texture
-   files. They are kept byte-identical and stay under AE2's LGPL-3.0 license;
-   they exist only so this mod can ship its own editable copies of the faces it
-   reuses.
+   Also: every part and item face is referenced straight out of AE2's own
+   resources (ae2:part/..., ae2:item/...); none of AE2's textures is copied into
+   this jar. Every texture this jar ships is this project's own art: the three
+   terminal light layers it draws itself (part/terminal_front_medium.png,
+   part/terminal_front_bright.png, part/terminal_front_dark.png), the optional
+   part front plate (part/panel_front_base.png, kept for later use and not
+   referenced by any model yet), the configurator icon
+   (item/throughput_monitor_configurator), and the three GUI backgrounds under
+   assets/ae2/textures/guis/ (ae_monitornet_monitor.png,
+   ae_monitornet_terminal.png, ae_monitornet_window.png), which sit in the ae2
+   namespace because AE2 resolves style textures from there only.
 
 Original work in this mod (not derived from the projects above):
   - ThroughputHistory: discontinuity-aware sampling history, per-window series
@@ -35,7 +40,8 @@ Original work in this mod (not derived from the projects above):
   - ThroughputChart: the in-GUI line chart renderer.
   - AdvancedThroughputMonitorPart, the storage monitor terminal (part + item),
     the draggable per-target chart windows, the block highlight ("locate")
-    feature, the terminal row merging/sync protocol and all GUI textures
-    (except the AE2-derived part faces listed above).
+    feature, the terminal row merging/sync protocol and all of this mod's own
+    textures (the three part light layers, the optional front plate, the
+    configurator icon and the GUI backgrounds).
 
 All trademarks and copyrights remain with their respective owners.
