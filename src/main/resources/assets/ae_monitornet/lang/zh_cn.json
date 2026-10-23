@@ -50,5 +50,8 @@
   "gui.ae_monitornet.window.no_history": "无曲线数据",
   "gui.ae_monitornet.window.close": "关闭本窗口",
   "gui.ae_monitornet.window.locate": "定位",
+  "gui.ae_monitornet.window.btn.locate": "定位",
+  "gui.ae_monitornet.window.btn.metric.storage": "储量",
+  "gui.ae_monitornet.window.btn.metric.flow": "流速",
   "gui.ae_monitornet.window.tip.locate": "在世界中高亮这台监控器"
 }

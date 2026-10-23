@@ -171,7 +171,7 @@ public class TerminalWindow {
                     screen.requestRowSeries(window.rowIndex);
                 }));
         this.buttons.add(new WindowButton("gui.ae_monitornet.window.close", CLOSE_BTN_SIZE, false,
-                (row, window) -> "×",
+                (row, window) -> Component.literal("×"),
                 (screen, window) -> window.requestClose()));
 
         // 「定位」：在世界里给该行第一个来源监控器画红色描边。没有来源时置灰不可点。
@@ -264,10 +264,11 @@ public class TerminalWindow {
 
         // 字符最后画：先按"最多能放几个像素"截断，再居中，最后 clamp 回按钮内
         // （按钮上不再有"悬停反色"，见 COL_BTN_BODY 的说明）
-        String label = button.label(row, this);
+        // 文字是可翻译的 Component：量宽与绘制用同一个重载，只有真放不下时才落成截断后的字面量
+        Component label = button.label(row, this);
         int maxTextW = Math.max(1, bw - 4);
         if (font.width(label) > maxTextW) {
-            label = font.plainSubstrByWidth(label, maxTextW - 4) + "…";
+            label = Component.literal(font.plainSubstrByWidth(label.getString(), maxTextW - 4) + "…");
         }
         int textW = font.width(label);
         int textX = bx + (bw - textW) / 2;
@@ -457,8 +458,9 @@ public class TerminalWindow {
     // 按钮文字（AE 风格：按钮上只写"当前值/功能"，全称在悬停提示里）
     // ------------------------------------------------------------------
 
-    /** 「定位」按钮的文字（就用文字长按钮，不画箭头图标）。 */
-    private static final String LOCATE_LABEL = "定位";
+    /** 「定位」按钮的文字（就用文字长按钮，不画箭头图标）。短标要放得进 30px 宽按钮，见键值。 */
+    private static final Component LOCATE_LABEL =
+            Component.translatable("gui.ae_monitornet.window.btn.locate");
 
     /**
      * 显示量：储量 / 流速。
@@ -466,24 +468,25 @@ public class TerminalWindow {
      * <p>加速度已从界面撤掉（枚举还在，但服务端下发的行数据里已经把 ACCELERATION 归一成 RATE，
      * 见 {@code ThroughputTerminalMenu.displayMetric}），所以这里理论上只会出现前两种。
      */
-    private static String metricLabel(@Nullable TerminalRow row) {
+    private static Component metricLabel(@Nullable TerminalRow row) {
         if (row == null) {
-            return "-";
+            return Component.literal("-");
         }
         return switch (ThroughputHistory.Metric.byOrdinal(row.metricOrdinal())) {
-            case AMOUNT -> "储量";
-            default -> "流速";
+            case AMOUNT -> Component.translatable("gui.ae_monitornet.window.btn.metric.storage");
+            default -> Component.translatable("gui.ae_monitornet.window.btn.metric.flow");
         };
     }
 
     /** 时间窗：直接用枚举自带的短标（10s / 1m / 10m / 60m）——这是"值"，不改。 */
-    private static String windowLabel(@Nullable TerminalRow row) {
-        return row == null ? "-" : ThroughputHistory.Window.byOrdinal(row.windowOrdinal()).label;
+    private static Component windowLabel(@Nullable TerminalRow row) {
+        return Component.literal(
+                row == null ? "-" : ThroughputHistory.Window.byOrdinal(row.windowOrdinal()).label);
     }
 
     /** 大小单位：mB / B。 */
-    private static String unitLabel(@Nullable TerminalRow row) {
-        return row == null ? "-" : (row.largeUnit() ? "B" : "mB");
+    private static Component unitLabel(@Nullable TerminalRow row) {
+        return Component.literal(row == null ? "-" : (row.largeUnit() ? "B" : "mB"));
     }
 
     // ------------------------------------------------------------------
@@ -559,7 +562,7 @@ public class TerminalWindow {
      * @param langKey  悬停提示的本地化键
      * @param width    按钮宽度（长按钮 25，关闭键 12，定位 30）
      * @param unitOnly 是否只在"有大小单位之分"的行（流体等）上出现
-     * @param label    按钮文字（只写当前值/功能，AE 风格短标）
+     * @param label    按钮文字（只写当前值/功能，AE 风格短标；可翻译文本）
      * @param action   点击行为
      */
     private record WindowButton(String langKey, int width, boolean unitOnly,
@@ -569,7 +572,7 @@ public class TerminalWindow {
             return this.width <= CLOSE_BTN_SIZE ? CLOSE_BTN_SIZE : WIDE_BTN_H;
         }
 
-        String label(@Nullable TerminalRow row, TerminalWindow window) {
+        Component label(@Nullable TerminalRow row, TerminalWindow window) {
             return this.label.text(row, window);
         }
 
@@ -594,6 +597,6 @@ public class TerminalWindow {
     @FunctionalInterface
     private interface LabelSource {
 
-        String text(@Nullable TerminalRow row, TerminalWindow window);
+        Component text(@Nullable TerminalRow row, TerminalWindow window);
     }
 }
