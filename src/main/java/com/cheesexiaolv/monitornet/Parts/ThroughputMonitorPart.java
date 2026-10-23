@@ -1,5 +1,6 @@
 package com.cheesexiaolv.monitornet.Parts;
 
+import com.cheesexiaolv.monitornet.AeMonitorNet;
 import com.cheesexiaolv.monitornet.Items.ThroughputMonitorConfigurator;
 import com.cheesexiaolv.monitornet.Logic.ThroughputCache;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -48,8 +49,10 @@ import java.util.Locale;
  * the part face. The rate routine can be cycled with the throughput monitor configurator
  * (per tick / second / minute / 10 minutes).
  *
- * <p>Models reuse AE2's storage monitor model and status lights, so no custom part model resources
- * are needed.
+ * <p>Models reuse AE2's storage monitor lights and status strip, but the front plate is this mod's
+ * own {@code ae_monitornet:part/monitor_base}: a child of AE2's {@code part/display_base} that only
+ * replaces {@code front} (AE2 19.2's {@code ae2:part/monitor_front} is an outline-only ring, the
+ * 1.20.1 filled plates are gone), so the panel is not see-through.
  *
  * <p><b>1.20.1 → 1.21.1 changes</b>
  * <ul>
@@ -70,19 +73,24 @@ import java.util.Locale;
  */
 public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridTickable {
 
-    // Model: same as Advanced AE's implementation -- AE2's storage monitor look and status lights
+    // Model: same as Advanced AE's implementation -- AE2's storage monitor lights and status strip
+    // on top of our own base plate (see MODEL_BASE_PLATE below; the lights models cannot override
+    // the front texture, that one lives in AE2's part/display_base).
+    public static final ResourceLocation MODEL_BASE_PLATE =
+            ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/monitor_base");
     public static final ResourceLocation MODEL_OFF = AppEng.makeId("part/storage_monitor_off");
     public static final ResourceLocation MODEL_ON = AppEng.makeId("part/storage_monitor_on");
 
-    public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE, MODEL_OFF, MODEL_STATUS_OFF);
-    public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_ON);
-    public static final IPartModel MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);
+    public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE_PLATE, MODEL_OFF, MODEL_STATUS_OFF);
+    public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE_PLATE, MODEL_ON, MODEL_STATUS_ON);
+    public static final IPartModel MODELS_HAS_CHANNEL =
+            new PartModel(MODEL_BASE_PLATE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);
 
     // Locked state reuses the same look (the base class still handles lock semantics)
-    public static final IPartModel MODELS_LOCKED_OFF = new PartModel(MODEL_BASE, MODEL_OFF, MODEL_STATUS_OFF);
-    public static final IPartModel MODELS_LOCKED_ON = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_ON);
+    public static final IPartModel MODELS_LOCKED_OFF = new PartModel(MODEL_BASE_PLATE, MODEL_OFF, MODEL_STATUS_OFF);
+    public static final IPartModel MODELS_LOCKED_ON = new PartModel(MODEL_BASE_PLATE, MODEL_ON, MODEL_STATUS_ON);
     public static final IPartModel MODELS_LOCKED_HAS_CHANNEL =
-            new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);
+            new PartModel(MODEL_BASE_PLATE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);
 
     private static final int positiveColor = AEColor.GREEN.mediumVariant;
     private static final int negativeColor = AEColor.RED.mediumVariant;

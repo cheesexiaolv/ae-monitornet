@@ -1,0 +1,6 @@
+{
+  "parent": "ae2:part/display_base",
+  "textures": {
+    "front": "ae_monitornet:part/terminal_front_base"
+  }
+}

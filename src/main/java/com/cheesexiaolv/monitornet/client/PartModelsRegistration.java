@@ -1,6 +1,7 @@
 package com.cheesexiaolv.monitornet.client;
 
 import com.cheesexiaolv.monitornet.AeMonitorNet;
+import com.cheesexiaolv.monitornet.Parts.ThroughputMonitorPart;
 import com.cheesexiaolv.monitornet.Parts.ThroughputTerminalPart;
 
 import appeng.api.parts.PartModels;
@@ -43,14 +44,18 @@ public final class PartModelsRegistration {
     @SubscribeEvent
     public static void registerPartModels(FMLClientSetupEvent event) {
         PartModels.registerModels(
-                // 吞吐终端：父模型是 AE2 的样板管理终端（ae2:part/pattern_access_terminal_off|_on），
-                // 只覆盖 lightsMedium / lightsBright 两层高亮；监控器与其它部件全部直接用 AE2 的模型，
-                // 不需要在这里登记。
+                // 吞吐终端：底板（ae_monitornet:part/terminal_base = AE2 part/display_base 的子模型，
+                // 只把 front 换成自有填充底板）+ 两层高亮（parent 是 AE2 的
+                // ae2:part/pattern_access_terminal_off|_on，只覆盖 lights*）。
+                ThroughputTerminalPart.MODEL_BASE_PLATE,
                 ThroughputTerminalPart.MODEL_OFF,
-                ThroughputTerminalPart.MODEL_ON);
+                ThroughputTerminalPart.MODEL_ON,
+                // 监控器：高亮/状态条直接用 AE2 的模型（不需要登记），只多一个自有底板。
+                ThroughputMonitorPart.MODEL_BASE_PLATE);
 
         // 这条管线失败时 AE2 不报错（找不到模型只是不渲染），所以留一行启动日志：
         // 世界里部件外观走的是不是自有模型，可直接从 latest.log 确认这次登记有没有发生。
-        LOGGER.info("Registered 2 custom part models with AE2 (terminal_off/terminal_on)");
+        LOGGER.info("Registered 4 custom part models with AE2 "
+                + "(terminal_base/terminal_off/terminal_on/monitor_base)");
     }
 }

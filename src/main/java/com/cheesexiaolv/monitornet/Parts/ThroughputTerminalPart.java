@@ -37,11 +37,13 @@ import appeng.parts.reporting.AbstractDisplayPart;
  * change only that row. Settings are exposed through {@link ITerminalSettingsHost}; the wireless
  * terminal (item) implements the same interface, so both share one menu/screen.
  *
- * <p>In-world looks only change <b>two highlight layers</b> on AE2's pattern-access-terminal part
- * model: geometry and front texture are inherited from AE2's {@code part/display_base} /
- * {@code part/pattern_access_terminal_*} (the front is AE2's {@code ae2:part/monitor_front}), only
- * {@code lightsMedium} / {@code lightsBright} are replaced by this mod's
- * {@code ae_monitornet:part/terminal_front_{medium,bright}}.
+ * <p>In-world looks combine three baked models (see {@link PartModel}): the base plate
+ * {@code ae_monitornet:part/terminal_base} (a child of AE2's {@code part/display_base} that only
+ * replaces {@code front} with this mod's filled plate), the lights overlay
+ * {@code ae_monitornet:part/terminal_on|_off} (child of AE2's
+ * {@code part/pattern_access_terminal_on|_off}, replacing {@code lightsMedium} /
+ * {@code lightsBright} / {@code lightsDark} with {@code ae_monitornet:part/terminal_front_*}),
+ * and AE2's status-strip models.
  *
  * <p><b>1.20.1 → 1.21.1 changes</b>
  * <ul>
@@ -61,21 +63,27 @@ import appeng.parts.reporting.AbstractDisplayPart;
  */
 public class ThroughputTerminalPart extends AbstractDisplayPart implements ITerminalSettingsHost {
 
-    // The mod's own part models (in-world rendering): only off/on; the parent model is AE2's
-    // ae2:part/pattern_access_terminal_off|_on, overriding only lightsMedium / lightsBright.
-    // These ids must be registered with AE2's part-model baker on client startup
+    // The mod's own part models (in-world rendering). A PartModel is just a list of baked models
+    // that are drawn on top of each other, and a "textures" override only applies to the model it
+    // is declared in -- so the front plate CANNOT be reached from the lights models: it lives in
+    // AE2's part/display_base, whose "front" is ae2:part/monitor_front (in AE2 19.2 that is an
+    // outline-only 44 px ring, the 1.20.1 filled plates were deleted). Hence our own
+    // part/terminal_base child of display_base that overrides that one texture.
+    // All ids must be registered with AE2's part-model baker on client startup
     // (appeng.api.parts.PartModels#registerModels, see PartModelsRegistration), otherwise AE2's
     // CableBus cannot look them up and the panel simply does not render (without any
-    // "missing model" error). MODEL_BASE (geometry) is deliberately NOT overridden: it stays the
-    // base class's ae2:part/display_base.
+    // "missing model" error).
+    public static final ResourceLocation MODEL_BASE_PLATE =
+            ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/terminal_base");
     public static final ResourceLocation MODEL_OFF =
             ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/terminal_off");
     public static final ResourceLocation MODEL_ON =
             ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/terminal_on");
 
-    public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE, MODEL_OFF, MODEL_STATUS_OFF);
-    public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_ON);
-    public static final IPartModel MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);
+    public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE_PLATE, MODEL_OFF, MODEL_STATUS_OFF);
+    public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE_PLATE, MODEL_ON, MODEL_STATUS_ON);
+    public static final IPartModel MODELS_HAS_CHANNEL =
+            new PartModel(MODEL_BASE_PLATE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);
 
     /** View constants (forwarded to {@link TerminalSettings}, used by the screen code). */
     public static final int VIEW_TEXT = TerminalSettings.VIEW_TEXT;
