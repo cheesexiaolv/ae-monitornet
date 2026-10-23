@@ -4,6 +4,6 @@
     "front": "ae2:part/pattern_access_terminal",
     "front_bright": "ae_monitornet:part/terminal_front_bright",
     "front_medium": "ae_monitornet:part/terminal_front_medium",
-    "front_dark": "ae2:part/pattern_access_terminal_dark"
+    "front_dark": "ae_monitornet:part/terminal_front_dark"
   }
 }
