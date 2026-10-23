@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -23,9 +24,11 @@ import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.util.AEColor;
 import appeng.client.render.BlockEntityRenderHelper;
+import appeng.core.AELog;
 import appeng.core.AppEng;
 import appeng.hooks.ticking.TickHandler;
 import appeng.parts.PartModel;
@@ -65,6 +68,18 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
 
     // 采样缓存容量：沿用 Advanced AE 的默认值（throughputMonitorCacheSize 默认 80）
     private static final int CACHE_SIZE = 80;
+
+    /**
+     * 本模组自己保存的一份监控对象 key（由 {@link #writeToNBT} 写入）。
+     *
+     * <p>AE2 的 {@code AbstractMonitorPart} 已经把 key 以 {@code "configuredItem"} 落盘
+     * （AE2 12.9.9 {@code appeng/parts/reporting/AbstractMonitorPart.java:85-92} 的
+     * {@code writeToNBT} -> {@code AEKey#toTagGeneric()}），那份仍是主字段、且完全向后兼容。
+     * 这里多存一份是为了让本零件的 {@code writeToNBT}/{@code readFromNBT} 自身对称：
+     * 基类的 key 字段是 private，一旦 AE2 那个 tag 缺失（更早的存档、或将来 AE2 不再写它），
+     * 零件就会静默地回来时没有监控对象。只有当 AE2 自己的字段没能恢复出 key 时才读这一份。
+     */
+    private static final String TAG_KEY = "monitornetKey";
 
     private final ThroughputCache cache = new ThroughputCache(CACHE_SIZE);
     protected double lastReportedValue = 0;
@@ -131,6 +146,7 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     @Override
     public void writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
+        writeConfiguredKey(data);
         data.putDouble("lastValue", this.lastReportedValue);
         data.putString("throughput", this.lastHumanReadableValue);
         data.putInt("routine", this.workRoutine.ordinal());
@@ -139,9 +155,68 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
+        restoreConfiguredKey(data);
         this.lastReportedValue = data.getDouble("lastValue");
         this.lastHumanReadableValue = data.getString("throughput");
         this.workRoutine = WorkRoutine.fromInt(data.getInt("routine"));
+    }
+
+    /**
+     * 把监控对象再存一份到 {@link #TAG_KEY}。
+     *
+     * <p>编码失败的 key 绝不能中断一次世界保存（那样丢的是整个 chunk 而不是一个字段），
+     * 所以失败只记日志。
+     */
+    private void writeConfiguredKey(CompoundTag data) {
+        var key = getDisplayed();
+        if (key == null) {
+            data.remove(TAG_KEY);
+            return;
+        }
+        try {
+            data.put(TAG_KEY, key.toTagGeneric());
+        } catch (RuntimeException e) {
+            data.remove(TAG_KEY);
+            AELog.warn("AE MonitorNet: could not persist the monitored key of %s: %s", this, e);
+        }
+    }
+
+    /**
+     * {@link #TAG_KEY} 的兜底读取：只在 AE2 自己的 {@code configuredItem} 没恢复出 key 时
+     * （tag 缺失，或存在但解不出来）才用。恢复后重新挂 watcher，让读数接着工作。
+     */
+    private void restoreConfiguredKey(CompoundTag data) {
+        if (getDisplayed() != null || !data.contains(TAG_KEY, Tag.TAG_COMPOUND)) {
+            return;
+        }
+
+        AEKey restored = null;
+        try {
+            restored = AEKey.fromTagGeneric(data.getCompound(TAG_KEY));
+        } catch (RuntimeException e) {
+            AELog.warn("AE MonitorNet: could not read the monitored key of %s: %s", this, e);
+        }
+
+        if (restored == null) {
+            AELog.warn("AE MonitorNet: monitored key of %s could not be decoded (tag: %s); the part "
+                    + "starts without a monitored object", this, data.getCompound(TAG_KEY));
+            return;
+        }
+
+        // setConfiguredItem() 会标脏宿主做客户端同步，所以必须有挂载的 host；
+        // 从磁盘读档时 host 一定在 readFromNBT 之前就设置好了。
+        if (getHost() != null) {
+            setConfiguredItem(restored);
+            // AE2 12.9.9 的 configureWatchers() 是 private（1.20.1 的 15.4.10 才改成 protected），
+            // 只能反射调 —— 与 AdvancedThroughputMonitorPart#onConfigChanged 的写法一致
+            try {
+                var method = AbstractMonitorPart.class.getDeclaredMethod("configureWatchers");
+                method.setAccessible(true);
+                method.invoke(this);
+            } catch (ReflectiveOperationException e) {
+                AELog.warn("Failed to reconfigure throughput monitor watcher: ", e);
+            }
+        }
     }
 
     @Override
