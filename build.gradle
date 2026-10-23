@@ -69,11 +69,19 @@ dependencies {
 
     // Soft dependencies, stage 2 of the port (WUT integration / tooltip providers). Kept on the
     // compile classpath so a future plugin class compiles against exactly the jar players use.
-    // NOTE: AE2WTLib also needs cloth-config + architectury + curios at runtime; those are not
-    // in libs/ yet, so runClient is not expected to work until they are copied in.
+    // Also on the runtime classpath so `gradlew runClient` boots a realistic test instance.
     compileOnly files("libs/ae2wtlib-${ae2wtlib_version}.jar")
+    runtimeOnly files("libs/ae2wtlib-${ae2wtlib_version}.jar")
     compileOnly files("libs/jei-1.21.1-neoforge-${jei_version}.jar")
+    runtimeOnly files("libs/jei-1.21.1-neoforge-${jei_version}.jar")
     compileOnly files("libs/Jade-1.21.1-NeoForge-${jade_version}.jar")
+    runtimeOnly files("libs/Jade-1.21.1-NeoForge-${jade_version}.jar")
+    // AE2WTLib runtime prerequisites (curios is OPTIONAL in its neoforge.mods.toml, the other two
+    // are only needed by AE2WTLib's own optional integrations, but present here so the dev client
+    // matches what the test instance in D:\PCL runs).
+    runtimeOnly files("libs/architectury-13.0.8-neoforge.jar")
+    runtimeOnly files("libs/cloth-config-15.0.140-neoforge.jar")
+    runtimeOnly files("libs/curios-neoforge-9.5.1+1.21.1.jar")
 }
 
 tasks.named('processResources', ProcessResources).configure {
