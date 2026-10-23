@@ -50,5 +50,8 @@
   "gui.ae_monitornet.window.no_history": "No chart data",
   "gui.ae_monitornet.window.close": "Close this window",
   "gui.ae_monitornet.window.locate": "Locate",
+  "gui.ae_monitornet.window.btn.locate": "Find",
+  "gui.ae_monitornet.window.btn.metric.storage": "Amt",
+  "gui.ae_monitornet.window.btn.metric.flow": "Flow",
   "gui.ae_monitornet.window.tip.locate": "Highlight this monitor in the world"
 }
