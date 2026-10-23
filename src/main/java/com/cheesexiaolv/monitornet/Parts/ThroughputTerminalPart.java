@@ -19,6 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEKey;
+import appeng.core.AppEng;
 import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocators;
 import appeng.parts.PartModel;
@@ -37,13 +38,13 @@ import appeng.parts.reporting.AbstractDisplayPart;
  * change only that row. Settings are exposed through {@link ITerminalSettingsHost}; the wireless
  * terminal (item) implements the same interface, so both share one menu/screen.
  *
- * <p>In-world looks combine three baked models (see {@link PartModel}): the base plate
- * {@code ae_monitornet:part/terminal_base} (a child of AE2's {@code part/display_base} that only
- * replaces {@code front} with this mod's filled plate), the lights overlay
- * {@code ae_monitornet:part/terminal_on|_off} (child of AE2's
- * {@code part/pattern_access_terminal_on|_off}, replacing {@code lightsMedium} /
+ * <p>In-world looks follow AE2's own reporting parts on the exact same model chain (the one AE2's
+ * {@code StorageMonitorPart} uses for its monitor): geometry and front plate come from AE2's
+ * {@code part/display_base} ({@code front} = {@code ae2:part/monitor_front}), and only the
+ * highlight layers are this mod's own {@code ae_monitornet:part/terminal_on|_off} (children of
+ * AE2's {@code part/pattern_access_terminal_on|_off}, replacing {@code lightsMedium} /
  * {@code lightsBright} / {@code lightsDark} with {@code ae_monitornet:part/terminal_front_*}),
- * and AE2's status-strip models.
+ * plus AE2's status-strip models.
  *
  * <p><b>1.20.1 → 1.21.1 changes</b>
  * <ul>
@@ -63,18 +64,13 @@ import appeng.parts.reporting.AbstractDisplayPart;
  */
 public class ThroughputTerminalPart extends AbstractDisplayPart implements ITerminalSettingsHost {
 
-    // The mod's own part models (in-world rendering). A PartModel is just a list of baked models
-    // that are drawn on top of each other, and a "textures" override only applies to the model it
-    // is declared in -- so the front plate CANNOT be reached from the lights models: it lives in
-    // AE2's part/display_base, whose "front" is ae2:part/monitor_front (in AE2 19.2 that is an
-    // outline-only 44 px ring, the 1.20.1 filled plates were deleted). Hence our own
-    // part/terminal_base child of display_base that overrides that one texture.
-    // All ids must be registered with AE2's part-model baker on client startup
-    // (appeng.api.parts.PartModels#registerModels, see PartModelsRegistration), otherwise AE2's
-    // CableBus cannot look them up and the panel simply does not render (without any
+    // In-world rendering: AE2's part/display_base (AE2's own AbstractDisplayPart.MODEL_BASE, which
+    // carries @PartModels and is therefore already registered by AE2) plus our two lights models
+    // drawn on top of it. Only MODEL_OFF / MODEL_ON are ids we register with AE2's part-model baker
+    // on client startup (appeng.api.parts.PartModels#registerModels, see PartModelsRegistration),
+    // otherwise AE2's CableBus cannot look them up and the panel simply does not render (without any
     // "missing model" error).
-    public static final ResourceLocation MODEL_BASE_PLATE =
-            ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/terminal_base");
+    public static final ResourceLocation MODEL_BASE_PLATE = AppEng.makeId("part/display_base");
     public static final ResourceLocation MODEL_OFF =
             ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/terminal_off");
     public static final ResourceLocation MODEL_ON =

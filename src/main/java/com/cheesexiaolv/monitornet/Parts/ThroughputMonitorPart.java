@@ -1,6 +1,5 @@
 package com.cheesexiaolv.monitornet.Parts;
 
-import com.cheesexiaolv.monitornet.AeMonitorNet;
 import com.cheesexiaolv.monitornet.Items.ThroughputMonitorConfigurator;
 import com.cheesexiaolv.monitornet.Logic.ThroughputCache;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -49,10 +48,11 @@ import java.util.Locale;
  * the part face. The rate routine can be cycled with the throughput monitor configurator
  * (per tick / second / minute / 10 minutes).
  *
- * <p>Models reuse AE2's storage monitor lights and status strip, but the front plate is this mod's
- * own {@code ae_monitornet:part/monitor_base}: a child of AE2's {@code part/display_base} that only
- * replaces {@code front} (AE2 19.2's {@code ae2:part/monitor_front} is an outline-only ring, the
- * 1.20.1 filled plates are gone), so the panel is not see-through.
+ * <p>Models reuse AE2's storage monitor model and status lights unchanged -- AE2's
+ * {@code part/display_base} plus {@code part/storage_monitor_off|_on} plus
+ * {@code part/display_status_*} -- so no custom part model resources are needed. Seeing AE2's
+ * {@code part/monitor_back} through the middle of the ring-shaped {@code ae2:part/monitor_front}
+ * is what AE2's own ME storage monitor looks like as well, not a missing texture.
  *
  * <p><b>1.20.1 → 1.21.1 changes</b>
  * <ul>
@@ -73,11 +73,10 @@ import java.util.Locale;
  */
 public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridTickable {
 
-    // Model: same as Advanced AE's implementation -- AE2's storage monitor lights and status strip
-    // on top of our own base plate (see MODEL_BASE_PLATE below; the lights models cannot override
-    // the front texture, that one lives in AE2's part/display_base).
-    public static final ResourceLocation MODEL_BASE_PLATE =
-            ResourceLocation.fromNamespaceAndPath(AeMonitorNet.MODID, "part/monitor_base");
+    // Model: same as Advanced AE's implementation -- AE2's storage monitor look and status lights.
+    // MODEL_BASE_PLATE is AE2's own part/display_base (AE2's AbstractDisplayPart.MODEL_BASE), so the
+    // model list below is identical to AE2's StorageMonitorPart and nothing here is ours to register.
+    public static final ResourceLocation MODEL_BASE_PLATE = AppEng.makeId("part/display_base");
     public static final ResourceLocation MODEL_OFF = AppEng.makeId("part/storage_monitor_off");
     public static final ResourceLocation MODEL_ON = AppEng.makeId("part/storage_monitor_on");
 
