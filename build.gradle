@@ -102,6 +102,10 @@ dependencies {
     runtimeOnly files("libs/AdvancedAE-1.5.3-1.21.1.jar")
     runtimeOnly files("libs/geckolib-neoforge-1.21.1-4.9.3.jar")
     runtimeOnly files("libs/Glodium-1.21-2.2-neoforge.jar")
+
+    // AE2 dropped its own JEI integration in 1.21, so without this mod JEI shows no AE2 recipes at
+    // all (inscriber/charger/processor chains included). Dev-only: players' packs ship it themselves.
+    runtimeOnly files("libs/ae2jeiintegration-1.2.1.jar")
 }
 
 /**
