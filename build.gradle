@@ -90,6 +90,18 @@ dependencies {
     runtimeOnly files("libs/architectury-13.0.8-neoforge.jar")
     runtimeOnly files("libs/cloth-config-15.0.140-neoforge.jar")
     runtimeOnly files("libs/curios-neoforge-9.5.1+1.21.1.jar")
+
+    // ---- Test-only mods for the AdvancedAE interop check (never shipped, never compiled against) ----
+    // AdvancedAE 1.5.3-1.21.1: runtimeOnly on purpose. Our bridge only refers to its classes by
+    // name (Parts/AaeMonitorRef), so there is no compile-time type dependency on AAE.
+    // Version note: AAE 1.6.x bundles an ae2addonlib that declares `neoforge [21.1.203,)`, while
+    // this branch pins NeoForge 21.1.180; 1.5.3 is the newest 1.21.1 AAE that loads on the pinned
+    // toolchain (it requires glodium + geckolib instead, both listed below).
+    // GeckoLib 4.9.3: AAE declares `geckolib >= [4.7.6,)` as REQUIRED (quantum armor animations).
+    // Glodium 2.2: AAE 1.5.3 declares `glodium >= [1.21-2.0-neoforge,)` as REQUIRED.
+    runtimeOnly files("libs/AdvancedAE-1.5.3-1.21.1.jar")
+    runtimeOnly files("libs/geckolib-neoforge-1.21.1-4.9.3.jar")
+    runtimeOnly files("libs/Glodium-1.21-2.2-neoforge.jar")
 }
 
 /**
