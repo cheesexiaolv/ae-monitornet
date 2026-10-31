@@ -26,10 +26,10 @@ history, unit derivation, chart and the terminal UI) is our own implementation.
    this jar. Every texture this jar ships is this project's own art: the three
    terminal light layers it draws itself (part/terminal_front_medium.png,
    part/terminal_front_bright.png, part/terminal_front_dark.png), the wireless
-   terminal item icon (item/wireless_throughput_terminal, drawn in this
-   project's palette so the wireless terminal no longer borrows
-   ae2:item/wireless_terminal), the configurator icon
-   (item/throughput_monitor_configurator), and the three GUI
+   terminal item icon (item/wireless_throughput_terminal, currently a verbatim
+   copy of AE2's ae2:item/wireless_terminal placed in this mod's own namespace;
+   this project has not redrawn it yet and will replace it with its own art
+   later), the configurator icon (item/throughput_monitor_configurator), and the three GUI
    backgrounds under assets/ae2/textures/guis/ (ae_monitornet_monitor.png,
    ae_monitornet_terminal.png, ae_monitornet_window.png), which sit in the ae2
    namespace because AE2 resolves style textures from there only.
@@ -42,7 +42,7 @@ Original work in this mod (not derived from the projects above):
   - AdvancedThroughputMonitorPart, the storage monitor terminal (part + item),
     the draggable per-target chart windows, the block highlight ("locate")
     feature, the terminal row merging/sync protocol and all of this mod's own
-    textures (the three part light layers, the wireless terminal item icon,
-    the configurator icon and the GUI backgrounds).
+    textures (the three part light layers, the configurator icon and the GUI
+    backgrounds).
 
 All trademarks and copyrights remain with their respective owners.
