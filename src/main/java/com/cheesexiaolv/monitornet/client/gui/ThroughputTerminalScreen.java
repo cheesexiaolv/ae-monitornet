@@ -16,6 +16,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.Settings;
@@ -51,14 +52,14 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     // ---- 面板尺寸（与贴图切块一致）----
     private static final int GUI_WIDTH = 195;
     /**
-     * 头部块高度 = 贴图 v0..34（35 行）。
+     * 头部块高度 = 贴图 v0..17（18 行）。
      *
-     * <p>⚠️ <b>必须是 35，不能是 34</b>：贴图第 34 行（0 基）是 header 与列表之间的 1px 过渡行，
-     * 滚动条列最上面那 6×1 像素（x=178..183 的 242 高光边）就落在这一行。旧值 34 让 header
-     * 只贴 v0..33，而 firstRow 切片从 v35 起贴到屏幕 y=34 —— 贴图第 34 行被整行跳过、第 35 行
-     * 被画到 y=34，滚动条列顶部看起来就像被 UI 覆盖掉/错位了一行。
+     * <p>贴图里原本 18..34 那 17 行已经被剔除（用户重绘时删掉）；<b>第 17 行是 header 与列表之间
+     * 那条 1px 白线</b>，必须跟着 header 一起贴出来，所以这里取 18（不是 17）—— 取 17 时
+     * 只贴 v0..16，白线所在的行既不在 header 也不在 firstRow（firstRow 从 v18 起）里，
+     * 整行被跳过、屏幕上就看不到那条线。
      */
-    private static final int HEADER_H = 35;
+    private static final int HEADER_H = 18;
     /**
      * 底部块高度 = 贴图 v89..184（96 行）。
      *
@@ -77,14 +78,14 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
 
     /** 贴图里头部块的 y。 */
     private static final int TEX_HEADER_Y = 0;
-    /** 列表第一行切片 y（18 行）：贴图第 35 行是列表顶边，第 34 行属于 header。 */
-    private static final int TEX_FIRST_ROW_Y = 35;
+    /** 列表第一行切片 y（18 行）：贴图第 18 行是列表顶边（旧版 35，整体上移 17）。 */
+    private static final int TEX_FIRST_ROW_Y = 18;
     /** 列表中间行切片 y（18 行，每个可见行重复贴一次）。 */
-    private static final int TEX_ROW_Y = 53;
-    /** 列表最后一行切片 y（18 行，v71..88）。 */
-    private static final int TEX_LAST_ROW_Y = 71;
-    /** 贴图里底部块的 y：88 是列表底边（已含在 lastRow 里），背包从 89 起。 */
-    private static final int TEX_FOOTER_Y = 89;
+    private static final int TEX_ROW_Y = 36;
+    /** 列表最后一行切片 y（18 行，v54..71）。 */
+    private static final int TEX_LAST_ROW_Y = 54;
+    /** 贴图里底部块的 y：71 是列表底边（已含在 lastRow 里），背包从 72 起。 */
+    private static final int TEX_FOOTER_Y = 72;
     private static final int LIST_X = 8;
     /** 列表宽度：右边界 172（滚动条列 x 178…183，滑块位置由样式 JSON 的 widgets.scrollbar 给）。 */
     private static final int LIST_W = 164;
@@ -102,20 +103,17 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     // ---- 行内列位置（面板相对）：**只显示图标 + 存量 + 速率**，名称改到悬停提示里 ----
     /** 图标左边缘。 */
     private static final int ICON_X = 8;
-    /** 存量列右边界（整体左移 4：112 → 108）。 */
+    /** 存量列右边界。 */
     private static final int AMOUNT_RIGHT = 108;
-    /** 速率列右边界（整体左移 4：170 → 166）。 */
+    /** 速率列右边界。 */
     private static final int RATE_RIGHT = LIST_X + LIST_W - 6;
 
     // ---- 行高亮/悬停的绘制区域（**x = 7…168，高 18**，与贴图的列表内框对齐）----
     private static final int ROW_X = 7;
     private static final int ROW_W = 162;
 
-    // ---- 头部第二行的全局速率单位按钮（底部条已删除）----
-    /** 头部第二行的 y：标题在 y=6，这一行占 18..31，仍在 HEADER_H=35 之内（y=33/34 是头部块下沿）。 */
-    private static final int GLOBAL_BTN_Y = 18;
-    private static final int GLOBAL_BTN_W = 34;
-    private static final int GLOBAL_BTN_H = 14;
+    // ---- 左侧竖排工具栏：AE2 的 verticalToolbar（指南 / 终端风格那一列）----
+    // 全局速率单位按钮通过 addToLeftToolbar 挂在「终端风格」下方，位置由工具栏自己算。
 
     /** 双击列表行的判定窗口（毫秒）。 */
     private static final long DOUBLE_CLICK_MS = 250L;
@@ -129,8 +127,10 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
 
     private Scrollbar scrollbar;
 
-    /** 头部第二行的"全局速率单位"按钮（底部条已删除）。 */
-    private FlatButton globalRoutineButton;
+    /** 左侧工具栏里的「全局速率单位」按钮（显示当前档位 t/s/m/10m）。 */
+    private RoutineToolbarButton routineButton;
+
+    /** 浮动子窗口（后可拖动的图表窗口）。 */
 
     /**
      * 浮动子窗口（Mek 那种可拖动小窗）。
@@ -182,6 +182,12 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         //   AE2 自己的 PatternAccessTermScreen 也是在构造函数里 addToLeftToolbar 的。
         this.addToLeftToolbar(new SettingToggleButton<>(
                 Settings.TERMINAL_STYLE, currentStyle(), this::toggleTerminalStyle));
+
+        // 全局速率单位：挂在左侧工具栏「终端风格」下方（addToLeftToolbar 是追加，
+        // 所以顺序 = 指南 → 终端风格 → 本按钮）；位置由 VerticalButtonBar 自己算。
+        this.routineButton = this.addToLeftToolbar(new RoutineToolbarButton(
+                Component.empty(), btn -> this.menu.sendSetAllRoutines(nextGlobalRoutine()),
+                this::globalRoutine));
     }
 
     @Override
@@ -194,11 +200,6 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         super.init();
 
         this.scrollbar.setHeight(listHeight() - 4);
-
-        // 全局速率单位：挪到头部第二行（左对齐 x=8，34×14），按钮上只写当前值
-        this.globalRoutineButton = addRenderableWidget(new FlatButton(
-                this.leftPos + LIST_X, this.topPos + GLOBAL_BTN_Y, GLOBAL_BTN_W, GLOBAL_BTN_H,
-                Component.empty(), button -> this.menu.sendSetAllRoutines(nextGlobalRoutine())));
 
         updateScrollbar();
     }
@@ -294,15 +295,76 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         // 主界面永远是行列式列表（曲线只在浮动子窗口里看）
         drawRows(guiGraphics, mx, my, mouseX, mouseY);
 
-        // 浮动子窗口画在主界面之后（列表 / 滚动条 / 档位按钮之上）；坐标同样是面板相对坐标
-        drawWindows(guiGraphics, mx, my);
+        // 浮动子窗口不在这里画：它要压在背包物品图标 / AE 侧边栏之上，
+        // 所以改到 render() 里、在 super.render(...) 之后单独画（见下面的 render 覆写）。
 
-        // 头部第二行按钮的悬停提示（1.19.2 的 AbstractWidget 没有 setTooltip，所以屏幕自己画）
-        if (this.globalRoutineButton != null && this.globalRoutineButton.visible
-                && mx >= LIST_X && mx < LIST_X + GLOBAL_BTN_W
-                && my >= GLOBAL_BTN_Y && my < GLOBAL_BTN_Y + GLOBAL_BTN_H) {
+        // 左侧工具栏里「全局速率单位」按钮的悬停提示（按钮自己是 AE2 widget，没有自定义 tooltip）
+        if (this.routineButton != null && this.routineButton.visible && this.routineButton.isHovered()) {
             drawClampedTooltip(guiGraphics, mouseX, mouseY, routineGlobalTooltipLines());
         }
+    }
+
+    /**
+     * 浮动子窗口的绘制放在 {@code super.render(...)} 之后：vanilla 的
+     * {@code AbstractContainerScreen.render} 会在 {@code renderLabels}（→ {@code drawFG}）之后再画
+     * 一次手持物品，而背包槽物品图标 / AE 的侧边栏精灵也各自有自己的批次；把窗口放到最后、
+     * 并且把 pose 的 z 抬到 400（物品图标用的是 150），才能保证拖动时窗口永远在最上面。
+     */
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        int mx = mouseX - this.leftPos;
+        int my = mouseY - this.topPos;
+        Component hint = null;
+
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate((float) this.leftPos, (float) this.topPos, 400.0F);
+        for (TerminalWindow window : this.windows) {
+            window.draw(guiGraphics, this.font, this, mx, my);
+            Component windowHint = window.hintAt(mx, my, this);
+            if (windowHint != null) {
+                hint = windowHint;
+            }
+        }
+        guiGraphics.pose().popPose();
+        guiGraphics.flush();
+
+        if (hint != null) {
+            // ⚠️ 这里 pose 已经回到屏幕原点（super.render 里那层 (leftPos,topPos) 平移已 pop），
+            // 而 drawClampedTooltip 内部会再减一次 leftPos/topPos，所以必须自己把这层平移补回来，
+            // 否则提示会飞到屏幕左上角（实测过）。
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate((float) this.leftPos, (float) this.topPos, 0.0F);
+            drawClampedTooltip(guiGraphics, mouseX, mouseY, List.of(hint));
+            guiGraphics.pose().popPose();
+        }
+    }
+
+    /**
+     * 鼠标停在浮动子窗口上时，<b>不画底下槽位的物品提示</b>：否则提示会"透过窗口"冒出来
+     * （AE2 自己的 slot tooltip 在 super.render 里就已经画完了，这里只能挡住 vanilla 那层）。
+     */    @Override
+    protected void renderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        if (windowAt(mouseX - this.leftPos, mouseY - this.topPos) != null) {
+            return;
+        }
+        super.renderTooltip(guiGraphics, mouseX, mouseY);
+    }
+
+    /**
+     * 槽位里的物品统一上移 1px。
+     *
+     * <p>用户重绘的终端底图里，列表格与背包格的"内容位置"整体比原版高 1px；列表行图标在
+     * {@code drawRowContent} 里已经单独上移，这里补上背包/AE 槽位这一路（它们由 vanilla 的
+     * {@code renderSlot} 统一绘制，只能在这一层加偏移）。
+     */
+    @Override
+    public void renderSlot(GuiGraphics guiGraphics, Slot slot) {
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0.0F, -1.0F, 0.0F);
+        super.renderSlot(guiGraphics, slot);
+        guiGraphics.pose().popPose();
     }
 
     /**
@@ -354,20 +416,6 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     }
 
     /** 按列表顺序逐个画浮动子窗口（末尾在最上层），顺带画按钮的悬停提示。 */
-    private void drawWindows(GuiGraphics guiGraphics, int mx, int my) {
-        Component hint = null;
-        for (TerminalWindow window : this.windows) {
-            window.draw(guiGraphics, this.font, this, mx, my);
-            Component windowHint = window.hintAt(mx, my, this);
-            if (windowHint != null) {
-                hint = windowHint;
-            }
-        }
-        if (hint != null) {
-            // 绝对坐标（窗口内部用的是面板相对坐标，这里补回 offset 后交给统一的收敛方法）
-            drawClampedTooltip(guiGraphics, mx + this.leftPos, my + this.topPos, List.of(hint));
-        }
-    }
 
     /**
      * 列表行：<b>每一行可见行位都画分隔线</b>（空行也算一行，列表底部才不空落落），
@@ -426,12 +474,13 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         return windowAt(mx, my) != null;
     }
 
-    /** 一行里的图标 / 名称 / 存量 / 速率。 */
+    /** 一行里的图标 / 存量 / 速率。 */
     private void drawRowContent(GuiGraphics guiGraphics, TerminalRow row, int rowTop) {
         if (AEKeyRendering.get(row.key().getType()) != null) {
             // 1.20.1 的 drawInGui 不再有 blitOffset 参数（z 偏移由 GuiGraphics 的 pose 自己管）
+            // 图标 y = 行顶（不再 +1：之前整体偏低 1px，用户反馈后上移一格）
             AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics,
-                    ICON_X, rowTop + 1, row.key());
+                    ICON_X, rowTop, row.key());
         }
 
         String amount = amountText(row);
@@ -562,10 +611,10 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     private void openWindow(int rowIndex) {
         // 开窗位置错开：按已开窗口数偏移，避免叠在一起（构造里已经 clamp 回面板内）
         int slot = this.windows.size() % 4;
+        // 开窗位置错开：按已开窗口数偏移，避免叠在一起（构造里已经 clamp 回面板内）；
+        // 标题文字已按用户要求删掉，窗口不再持有 title。
         TerminalWindow window = new TerminalWindow(rowIndex,
                 8 + slot * 12, 34 + slot * 12, this::closeWindow);
-        TerminalRow row = this.menu.getRows().get(rowIndex);
-        window.title = row.key().getDisplayName().getString();
         this.windows.add(window);
 
         // 开窗立刻要一份服务端算好的曲线：客户端自记的那份刚开窗时只有一两个点，画出来是条夸张的斜线
@@ -737,15 +786,19 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
-    /** 松开：结束拖动（拖动中的窗口由它自己收尾，不再往下传）。 */
+    /** 松开：结束拖动，并让按住关闭键的窗口收尾（关闭回调可能把窗口从列表里摘掉，所以遍历副本）。 */
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        TerminalWindow window = draggingWindow();
-        if (window != null) {
-            window.mouseReleased();
-            return true;
+        int mx = (int) mouseX - this.leftPos;
+        int my = (int) mouseY - this.topPos;
+        boolean handled = draggingWindow() != null;
+        for (TerminalWindow window : List.copyOf(this.windows)) {
+            if (window.isPressing()) {
+                handled = true;
+            }
+            window.mouseReleased(mx, my, this);
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return handled || super.mouseReleased(mouseX, mouseY, button);
     }
 
     /**
@@ -801,20 +854,10 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
             updateScrollbar();
         }
 
-        // 状态行只留"出错"类提示（未连网 / 网络里没有监控器）；行数提示已按要求去掉
+        // 状态提示文字已按用户要求删除（"网络中无可用存储监控器"不再显示）。
         var rows = this.menu.getRows();
-        if (!this.menu.networkAvailable) {
-            this.setTextContent("status_text", Component.translatable("gui.ae_monitornet.terminal.no_network"));
-        } else if (rows.isEmpty()) {
-            this.setTextContent("status_text", Component.translatable("gui.ae_monitornet.terminal.no_monitors"));
-        } else {
-            this.setTextContent("status_text", Component.empty());
-        }
 
-        // 头部第二行：全局速率单位（一次改所有行；按钮上只写当前值 t/s/m/10m，全称在 tooltip 里）
-        this.globalRoutineButton.setMessage(Component.translatable("gui.ae_monitornet.tbtn.routine_global",
-                TerminalSettings.routineUnit(globalRoutine())));
-        this.globalRoutineButton.active = !rows.isEmpty();
+        // 全局速率单位按钮已经挪到右侧竖排按钮里（SIDE_BTN_ROUTINE），这里不再更新旧的 widget。
 
         // 有窗口开着就按服务端下发的间隔（配置项「图线绘制频率」换算而来）索要一次曲线：
         // 服务端那份是完整的采样历史，随开随新；间隔默认 = 2 × 采样间隔
@@ -833,9 +876,9 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         return rows.isEmpty() ? 1 : rows.get(0).routineOrdinal();
     }
 
-    /** 下一个全局速率档位（t → s → m → 10m → t）。 */
+    /** 下一个全局速率档位（t → s → m → t，取模用 {@link TerminalSettings#routineCount()}）。 */
     private int nextGlobalRoutine() {
-        return (globalRoutine() + 1) % 4;
+        return (globalRoutine() + 1) % TerminalSettings.routineCount();
     }
 
 }

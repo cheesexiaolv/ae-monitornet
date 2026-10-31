@@ -46,7 +46,7 @@ Only the advanced monitor records history. A row can only show a chart when an a
 <ItemImage id="ae_monitornet:throughput_monitor_configurator" scale="2" />
 <ItemLink id="ae_monitornet:throughput_monitor_configurator" />
 
-A hand-held tool: right-click a monitor to cycle its rate tier (t / s / m / 10m) without opening any GUI.
+A hand-held tool: right-click a monitor to cycle its rate tier (t / s / m) without opening any GUI.
 
 ## ME Storage Monitor Terminal
 
@@ -55,7 +55,7 @@ A hand-held tool: right-click a monitor to cycle its rate tier (t / s / m / 10m)
 
 A cable part that needs power and a channel. It lists every throughput monitor on the same network and merges the
 monitors that watch the same key into one row: icon, amount and rate. The header holds the global rate tier
-(t / s / m / 10m) and the terminal size setting; scroll the list with the mouse wheel.
+(t / s / m) and the terminal size setting; scroll the list with the mouse wheel.
 
 **Double-click a row** to open (or close) that row's floating chart window. The window is dragged by its title bar and
 has its own buttons: time window, metric (storage / flow / acceleration), fluid unit (mB / B) for fluid rows, and

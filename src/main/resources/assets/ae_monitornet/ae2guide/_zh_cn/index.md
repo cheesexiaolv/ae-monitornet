@@ -35,7 +35,7 @@ item_ids:
 <ItemImage id="ae_monitornet:throughput_monitor_configurator" scale="2" />
 <ItemLink id="ae_monitornet:throughput_monitor_configurator" />
 
-手持工具：右键 *ME吞吐量监控器* 即可循环切换它的速率档位（t / s / m / 10m），不用打开任何界面。
+手持工具：右键 *ME吞吐量监控器* 即可循环切换它的速率档位（t / s / m），不用打开任何界面。
 
 源自Advanced AE。
 
@@ -57,7 +57,7 @@ item_ids:
 <ItemLink id="ae_monitornet:throughput_terminal" />
 
 线缆部件，需要供电与频道。它枚举同一网络上的**所有**吞吐量监控器，并把监控同一对象的多个监控器
-合并成一行：图标、存量、速率。头部第二行是全局速率档位（t / s / m / 10m），左侧可切换终端尺寸；
+合并成一行：图标、存量、速率。头部第二行是全局速率档位（t / s / m），左侧可切换终端尺寸；
 列表用鼠标滚轮滚动。
 
 **双击某一行**即可打开（或关掉）该行的浮动曲线子窗口。子窗口可以按住标题栏拖动，自己的按钮有：

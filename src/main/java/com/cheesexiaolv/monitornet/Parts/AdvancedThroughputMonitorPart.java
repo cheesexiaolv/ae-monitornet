@@ -333,6 +333,21 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
         // back without a monitored object.
         if (!this.restoring) {
             getHost().markForSave();
+
+            // ⚠️ 根因（"把速率档切到 /t 之前不开始统计"）：AE2 只在设备被唤醒时才重新询问
+            // TickingRequest。本部件放下来时还没有监控对象 -> isSleeping=true -> 被 TickManager
+            // 睡掉；之后通过 GUI 配置槽设置对象不会走 AEBasePart 的 onUseItemOn，也就不会调
+            // wakeDevice，于是它一直睡着、一次 tickingRequest 都不跑、历史采样为空，
+            // 直到某个会 alertDevice 的操作（例如手动切一次速率档）把它叫醒。
+            // 所以这里必须主动唤醒并立即补一个样本，让曲线从"设置对象"那一刻开始。
+            getMainNode().ifPresent((grid, node) -> {
+                grid.getTickManager().wakeDevice(node);
+                grid.getTickManager().alertDevice(node);
+            });
+            this.sampleAccumulator = 0;
+            if (getDisplayed() != null) {
+                this.history.push(getAmount(), 1);
+            }
         }
         getHost().markForUpdate();
     }

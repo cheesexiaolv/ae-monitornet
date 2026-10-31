@@ -47,7 +47,11 @@ public class AeMonitorNet {
                     .title(Component.translatable("itemGroup.ae_monitornet"))
                     .icon(() -> new ItemStack(ModItems.THROUGHPUT_MONITOR_CONFIGURATOR.get()))
                     .displayItems((params, output) -> {
-                        output.accept(ModItems.THROUGHPUT_MONITOR_CONFIGURATOR.get());
+                        // 配置器与基础监控器都受"别的模组已提供"开关控制（AAE 自带同名配置器，
+                        // 两个都显示就会出现两把同名的工具）
+                        if (ModItems.providesConfigurator()) {
+                            output.accept(ModItems.THROUGHPUT_MONITOR_CONFIGURATOR.get());
+                        }
                         if (ModItems.providesBasicMonitor()) {
                             output.accept(ModItems.THROUGHPUT_MONITOR.get());
                         }

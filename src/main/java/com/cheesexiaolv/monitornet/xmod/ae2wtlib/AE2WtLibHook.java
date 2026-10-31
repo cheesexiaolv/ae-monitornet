@@ -135,11 +135,12 @@ public final class AE2WtLibHook {
                 return;
             }
 
-            // 第 5 个参数是选择盘/终端名用的 16x16 图标。这里直接用物品自己的贴图
-            // （我们的模型 layer0 就是 ae2:item/wireless_terminal），所以 WUT 切换面板里
-            // 显示的图标与物品图标逐像素一致；名字用默认的 item.getDescriptionId()。
+            // 第 5 个参数是选择盘/终端名用的 16x16 图标。用我们自己的标签页图标
+            // （textures/item/wireless_tab_icon.png：控件精灵表里那块 10x12 居中放进 16x16），
+            // 而不是物品图标，这样 WUT 切换面板里一眼能认出是我们的终端。
             Icon icon = new Icon(0, 0, 16, 16,
-                    new Icon.Texture(ResourceLocation.fromNamespaceAndPath("ae2", "textures/item/wireless_terminal.png"),
+                    new Icon.Texture(
+                            ResourceLocation.fromNamespaceAndPath("ae_monitornet", "textures/item/wireless_tab_icon.png"),
                             16, 16));
 
             // 宿主工厂 -> ThroughputTerminalWirelessMenuHost（WTMenuHost 子类，支持量子桥接卡，

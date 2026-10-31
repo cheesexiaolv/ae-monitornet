@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -94,8 +95,9 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     private static final int positiveColor = AEColor.GREEN.mediumVariant;
     private static final int negativeColor = AEColor.RED.mediumVariant;
 
-    // Sampling cache size: Advanced AE's default (throughputMonitorCacheSize = 80)
-    private static final int CACHE_SIZE = 80;
+    // Sampling cache size: 120 samples = 2 minutes at the default 1 sample/s interval
+    // (the m tier averages over 60s, so this leaves headroom).
+    private static final int CACHE_SIZE = 120;
 
     /**
      * Mod-owned copy of the monitored key (written by {@link #writeToNBT}).
@@ -132,25 +134,23 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
 
     private enum WorkRoutine {
         // ticks = how many ticks the displayed value is scaled by; timeLimit_s = averaging window
+        // 只有 t / s / m 三档（h 档已按用户要求去掉）
         TICK(1, 10),
         SECOND(20, 20),
-        MINUTE(1200, CACHE_SIZE / 2),
-        TEN_MINUTE(12000, CACHE_SIZE * 5);
+        MINUTE(1200, 60);
 
         public static WorkRoutine cycle(WorkRoutine routine) {
             return switch (routine) {
                 case TICK -> SECOND;
                 case SECOND -> MINUTE;
-                case MINUTE -> TEN_MINUTE;
-                case TEN_MINUTE -> TICK;
+                case MINUTE -> TICK;
             };
         }
 
         public static WorkRoutine fromInt(int value) {
             return switch (value) {
                 case 0 -> TICK;
-                case 2 -> MINUTE;
-                case 3 -> TEN_MINUTE;
+                case 2, 3 -> MINUTE; // 旧存档里的 3 是已删除的 10 分/时档，归到 m
                 default -> SECOND;
             };
         }
@@ -292,7 +292,7 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     @Override
     public boolean onUseItemOn(ItemStack heldItem, Player player, InteractionHand hand, Vec3 pos) {
         if (!isClientSide()) {
-            if (heldItem.getItem() instanceof ThroughputMonitorConfigurator) {
+            if (isConfigurator(heldItem)) {
                 cycleRoutine();
                 return true;
             }
@@ -309,7 +309,24 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
         return result;
     }
 
-    /** Cycle to the next display routine (per t/s/m/10m). Also called by the GUI unit switches. */
+    /**
+     * 是否是"能切档位"的配置器：我们的物品，或 AdvancedAE 的同名配置器。
+     *
+     * <p>装了 AAE 时我们的配置器不进创造栏、也没有配方（避免两把同名工具），玩家手里只会有
+     * AAE 那把；这里按物品 id 识别它，保证档位仍然能用手持物品切换。
+     */
+    private static boolean isConfigurator(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        if (stack.getItem() instanceof ThroughputMonitorConfigurator) {
+            return true;
+        }
+        return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()
+                .equals("advanced_ae:throughput_monitor_configurator");
+    }
+
+    /** Cycle to the next display routine (per t/s/m). Also called by the GUI unit switches. */
     public void cycleRoutine() {
         this.workRoutine = WorkRoutine.cycle(this.workRoutine);
 
@@ -533,7 +550,6 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
             case TICK -> "t";
             case SECOND -> "s";
             case MINUTE -> "m";
-            case TEN_MINUTE -> "10m";
         };
     }
 

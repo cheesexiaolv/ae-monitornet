@@ -70,6 +70,15 @@ public class ModItems {
         return basicMonitorProvided;
     }
 
+    /**
+     * 配置器与基础监控器同一套共存规则：别的模组（AdvancedAE 等）已经提供了吞吐量监控器时，
+     * 我们的配置器仍然注册（老存档里的物品不消失），但不进创造栏、也没有配方 ——
+     * 否则创造栏里会出现两把同名的「吞吐量监控配置器」。
+     */
+    public static boolean providesConfigurator() {
+        return providesBasicMonitor();
+    }
+
     // 1. throughput monitor configurator
     public static final DeferredHolder<Item, Item> THROUGHPUT_MONITOR_CONFIGURATOR =
             ITEMS.register("throughput_monitor_configurator",

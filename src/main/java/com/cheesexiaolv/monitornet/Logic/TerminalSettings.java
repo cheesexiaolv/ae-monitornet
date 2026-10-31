@@ -22,7 +22,12 @@ public record TerminalSettings(ThroughputHistory.Window window, ThroughputHistor
     public static final int VIEW_CHART = 1;
 
     /** How many ticks each routine represents (displayed rate = per-tick amount x this). */
-    private static final int[] ROUTINE_TICKS = { 1, 20, 1200, 12000 };
+    private static final int[] ROUTINE_TICKS = { 1, 20, 1200 };
+
+    /** 档位总数（t / s / m）—— 循环用它取模，别写死 4（h 档删掉后写 4 会多出一档空档）。 */
+    public static int routineCount() {
+        return ROUTINE_TICKS.length;
+    }
 
     /** Defaults: 1 minute window / flow / small unit / seconds routine. */
     public static final TerminalSettings DEFAULT = new TerminalSettings(ThroughputHistory.Window.M1,
@@ -36,12 +41,11 @@ public record TerminalSettings(ThroughputHistory.Window window, ThroughputHistor
         return ROUTINE_TICKS[routineOrdinal];
     }
 
-    /** Routine -> rate unit suffix (t / s / m / 10m). */
+    /** Routine -> rate unit suffix (t / s / m). */
     public static String routineUnit(int routineOrdinal) {
         return switch (routineOrdinal) {
             case 0 -> "t";
             case 2 -> "m";
-            case 3 -> "10m";
             default -> "s";
         };
     }
