@@ -42,8 +42,8 @@ public class ThroughputTerminalPart extends AbstractDisplayPart implements ITerm
 
     // 自有 part 模型（世界渲染用）：只有 off/on 两个 id，父模型就是 AE2 的
     // ae2:part/pattern_access_terminal_off|_on，只覆盖 lightsMedium / lightsBright。
-    // 这两个 id 必须在客户端启动时交给 AE2 的烘焙器登记
-    // （appeng.api.parts.PartModels#registerModels，见 PartModelsRegistration），
+    // 这两个 id 必须在 mod 构造阶段交给 AE2 的烘焙器登记
+    // （appeng.api.parts.PartModels#registerModels，在 AeMonitorNet 的构造器里调用，早于 AE2 冻结列表），
     // 否则 AE2 的 CableBus 取不到它们，世界里的面板会直接不显示（且不会报缺失模型）。
     // MODEL_BASE（几何底图）有意<b>不</b>覆盖：沿用基类 AbstractDisplayPart 的 ae2:part/display_base。
     public static final ResourceLocation MODEL_OFF =
