@@ -48,9 +48,9 @@ public final class MonitorNetNetwork {
 
     public static void init() {
         channel = NetworkRegistry.ChannelBuilder.named(CHANNEL_NAME)
-                .networkProtocolVersion(() -> "1")
-                .clientAcceptedVersions(version -> true)
-                .serverAcceptedVersions(version -> true)
+                .networkProtocolVersion(() -> "2")
+                .clientAcceptedVersions("2"::equals)
+                .serverAcceptedVersions("2"::equals)
                 .eventNetworkChannel();
         // Forge 的命名很反直觉：ServerCustomPayloadEvent = 服务端发来的载荷（客户端侧接收）
         channel.addListener(MonitorNetNetwork::onPayloadFromServer);

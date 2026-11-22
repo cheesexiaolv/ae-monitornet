@@ -70,6 +70,10 @@ public class CommonEvents {
     public static void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             var item = ModItems.WIRELESS_THROUGHPUT_TERMINAL.get();
+            var energy = appeng.core.definitions.AEItems.ENERGY_CARD;
+            if (appeng.api.upgrades.Upgrades.getMaxInstallable(energy, item) == 0) {
+                appeng.api.upgrades.Upgrades.add(energy, item, 2);
+            }
             if (GridLinkables.get(item) == null) {
                 GridLinkables.register(item, WirelessTerminalItem.LINKABLE_HANDLER);
             }

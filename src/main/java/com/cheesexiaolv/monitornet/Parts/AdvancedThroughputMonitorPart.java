@@ -290,6 +290,12 @@ public class AdvancedThroughputMonitorPart extends ThroughputMonitorPart impleme
         //  重进世界后零件就没有监控对象了。
         if (!this.restoring) {
             getHost().markForSave();
+            getMainNode().ifPresent((grid, node) -> {
+                grid.getTickManager().wakeDevice(node);
+                grid.getTickManager().alertDevice(node);
+            });
+            this.sampleAccumulator = 0;
+            if (key != null) this.history.push(getAmount(), 1);
         }
         getHost().markForUpdate();
     }

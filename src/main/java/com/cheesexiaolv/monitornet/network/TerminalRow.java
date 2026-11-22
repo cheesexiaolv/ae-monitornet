@@ -26,7 +26,7 @@ import appeng.api.stacks.AEKey;
  * @param metricOrdinal  该行的显示量（0=储量 1=流速 2=加速度）——同上
  * @param sources        来源监控器列表
  */
-public record TerminalRow(AEKey key, long amount, double ratePerTick, boolean hasHistory, boolean largeUnit,
+public record TerminalRow(int id, AEKey key, long amount, double ratePerTick, boolean hasHistory, boolean largeUnit,
         int routineOrdinal, int windowOrdinal, int metricOrdinal, List<Source> sources) {
 
     /**

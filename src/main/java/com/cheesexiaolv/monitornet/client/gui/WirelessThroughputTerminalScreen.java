@@ -18,5 +18,7 @@ public class WirelessThroughputTerminalScreen extends ThroughputTerminalScreen<T
     public WirelessThroughputTerminalScreen(ThroughputTerminalWirelessMenu menu, Inventory playerInventory,
             Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
+        this.widgets.add("upgrades", new appeng.client.gui.widgets.UpgradesPanel(
+                menu.getSlots(appeng.menu.SlotSemantics.UPGRADE)));
     }
 }

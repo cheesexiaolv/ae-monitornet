@@ -26,6 +26,10 @@ public class ThroughputTerminalWirelessMenu extends ThroughputTerminalMenu {
 
     public ThroughputTerminalWirelessMenu(int id, Inventory playerInventory, WirelessTerminalMenuHost host) {
         super(TYPE, id, playerInventory, host, new WirelessTerminalSettings(host.getItemStack()));
+        var stack = host.getItemStack();
+        if (stack.getItem() instanceof appeng.api.upgrades.IUpgradeableItem terminal) {
+            setupUpgrades(terminal.getUpgrades(stack));
+        }
     }
 
     /**

@@ -106,6 +106,10 @@ public final class AE2WtLibHook {
 
         try {
             registerTerminal(item);
+            var bridge = de.mari_023.ae2wtlib.AE2wtlib.QUANTUM_BRIDGE_CARD;
+            if (appeng.api.upgrades.Upgrades.getMaxInstallable(bridge, item) == 0) {
+                appeng.api.upgrades.Upgrades.add(bridge, item, 1);
+            }
         } catch (Throwable t) {
             // AE2 15.x 的 AELog 删掉了 log(Level, Throwable, String, Object...)，
             // 带异常的重载只剩 error(Throwable, String)（不带格式参数）。

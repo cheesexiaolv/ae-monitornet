@@ -151,16 +151,6 @@ Most of the code in this repository was written by an AI assistant (DeepSeek Har
 specifications, review and in-game testing by the repository owner. It was reviewed, compiled and
 play-tested by a human before release.
 
-### Migration
-
-This mod used to be called **AE Throughput Monitor** (mod id `aetm`) and is now **AE MonitorNet** (`ae_monitornet`); old NBT keys are still read back, and an old `aetm-server.toml` has to be copied over to `ae_monitornet-server.toml` by hand.
-
-The sources were renamed with it: the 1.20.1 and 1.21.1 branches use the `com.cheesexiaolv.monitornet`
-package and the `ae_monitornet` Gradle project; the 1.19.2 branch still uses its original
-`com.cheesexiaolv.aetm` package, although its Gradle group id and `rootProject.name` are already
-`com.cheesexiaolv.monitornet` / `ae-monitornet`. The shipped jar is `ae_monitornet-<version>.jar` on
-every branch.
-
 ---
 
 ## 中文
@@ -270,11 +260,3 @@ LGPL-3.0）：1.20.1 版直接使用这些部件，1.19.2 版是同一批部件�
 ### 关于代码来源
 
 本仓库绝大部分代码由 AI 助手（DeepSeek Harness）根据仓库所有者的需求、评审与实机测试编写；发布前经过人工审阅、编译与实机游玩验证。
-
-### 迁移
-
-本模组原名为 **AE Throughput Monitor**（modid `aetm`），现更名为 **AE MonitorNet**（`ae_monitornet`）；旧 NBT 键仍可读取，旧的 `aetm-server.toml` 需要手动把值抄到 `ae_monitornet-server.toml`。
-
-源码侧也一并改了名：1.20.1 / 1.21.1 分支的包名是 `com.cheesexiaolv.monitornet`、Gradle 工程是 `ae_monitornet`；
-1.19.2 分支仍保留最初的 `com.cheesexiaolv.aetm` 包名，但它的 groupId 与 `rootProject.name` 已经是
-`com.cheesexiaolv.monitornet` / `ae-monitornet`。三条分支的交付 jar 都叫 `ae_monitornet-<version>.jar`。

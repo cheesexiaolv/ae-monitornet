@@ -273,7 +273,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         drawRows(guiGraphics, mx, my, mouseX, mouseY);
 
         // 浮动子窗口画在主界面之后（列表 / 滚动条 / 档位按钮之上）；坐标同样是面板相对坐标
-        drawWindows(guiGraphics, mx, my);
+
 
         // 头部第二行按钮的悬停提示（1.19.2 的 AbstractWidget 没有 setTooltip，所以屏幕自己画）
         if (this.globalRoutineButton != null && this.globalRoutineButton.visible
@@ -332,19 +332,27 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     }
 
     /** 按列表顺序逐个画浮动子窗口（末尾在最上层），顺带画按钮的悬停提示。 */
-    private void drawWindows(GuiGraphics guiGraphics, int mx, int my) {
-        Component hint = null;
-        for (TerminalWindow window : this.windows) {
-            window.draw(guiGraphics, this.font, this, mx, my);
-            Component windowHint = window.hintAt(mx, my, this);
-            if (windowHint != null) {
-                hint = windowHint;
-            }
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        int mx = mouseX - this.leftPos;
+        int my = mouseY - this.topPos;
+        TerminalWindow hovered = windowAt(mx, my);
+        super.render(guiGraphics, hovered == null ? mouseX : -10000, hovered == null ? mouseY : -10000, partialTick);
+        if (this.windows.isEmpty()) return;
+        guiGraphics.flush();
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(this.leftPos, this.topPos, 400);
+        for (var window : this.windows) {
+            // Each opaque window starts a new GUI depth layer after earlier batches finish.
+            com.mojang.blaze3d.systems.RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT, false);
+            window.draw(guiGraphics, this.font, this, window == hovered ? mx : -10000, window == hovered ? my : -10000);
+            guiGraphics.flush();
         }
-        if (hint != null) {
-            // 绝对坐标（窗口内部用的是面板相对坐标，这里补回 offset 后交给统一的收敛方法）
-            drawClampedTooltip(guiGraphics, mx + this.leftPos, my + this.topPos, List.of(hint));
+        if (hovered != null) {
+            Component hint = hovered.hintAt(mx, my, this);
+            if (hint != null) drawClampedTooltip(guiGraphics, mouseX, mouseY, List.of(hint));
         }
+        guiGraphics.pose().popPose();
     }
 
     /**
@@ -540,7 +548,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     private void openWindow(int rowIndex) {
         // 开窗位置错开：按已开窗口数偏移，避免叠在一起（构造里已经 clamp 回面板内）
         int slot = this.windows.size() % 4;
-        TerminalWindow window = new TerminalWindow(rowIndex,
+        TerminalWindow window = new TerminalWindow(this.menu.getRows().get(rowIndex).id(),
                 8 + slot * 12, 34 + slot * 12, this::closeWindow);
         TerminalRow row = this.menu.getRows().get(rowIndex);
         window.title = row.key().getDisplayName().getString();
@@ -559,7 +567,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     @Nullable
     private TerminalWindow findWindow(int rowIndex) {
         for (TerminalWindow window : this.windows) {
-            if (window.rowIndex == rowIndex) {
+            if (indexOf(window.rowId) == rowIndex) {
                 return window;
             }
         }
@@ -602,6 +610,10 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     // 个类，所以这里开几个包可见的小门面给它用——子窗口不必知道菜单/网络的细节。
     // ⚠️ 窗口按钮改档位时都是先 selectRow(rowIndex) 再发动作（那些动作只作用于"选中行"）。
     // ------------------------------------------------------------------
+
+    int indexOf(int id) {
+        return this.menu.clientIndex(id);
+    }
 
     List<TerminalRow> rows() {
         return this.menu.getRows();
@@ -771,6 +783,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     @Override
     protected void updateBeforeRender() {
         super.updateBeforeRender();
+        this.windows.removeIf(window -> indexOf(window.rowId) < 0);
 
         if (this.menu.rowCount != this.lastRowCount) {
             this.lastRowCount = this.menu.rowCount;
@@ -798,7 +811,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
                 && ++this.seriesRequestCooldown >= this.menu.chartRefreshIntervalTicks()) {
             this.seriesRequestCooldown = 0;
             for (TerminalWindow window : this.windows) {
-                this.menu.sendRequestRowSeries(window.rowIndex);
+                this.menu.sendRequestRowSeries(indexOf(window.rowId));
             }
         }
     }
