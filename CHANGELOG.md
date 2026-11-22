@@ -1,5 +1,15 @@
 # 更新日志
 
+## 1.3.3b — 1.21.1 / NeoForge
+
+> 与 1.3.2b 协议一致（1）。**推荐所有 1.3.2b 用户升级**：1.3.2b 里残留的旧客户端登记器会在启动时抛一次
+> `IllegalStateException`（被 FML 记为 `Mod loading issue`），部件模型本身仍由构造器登记成功，属于噪音而非崩溃。
+
+### 修复
+
+- 删除残留的 `PartModelsRegistration`（旧版在 `FMLClientSetupEvent` 登记部件模型的类）。部件模型现在只在
+  mod 构造阶段登记一次，启动日志不再出现 `Caught exception during event FMLClientSetupEvent dispatch for modid ae_monitornet`。
+
 ## 1.3.2b — 1.21.1 / NeoForge
 
 > ⚠️ 网络协议号从 1 升到 2：客户端与服务端必须**同时**升级到 1.3.2b，否则连不上（会提示协议版本不匹配）。
