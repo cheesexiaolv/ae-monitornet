@@ -67,7 +67,8 @@ public class ThroughputTerminalPart extends AbstractDisplayPart implements ITerm
     // In-world rendering: AE2's part/display_base (AE2's own AbstractDisplayPart.MODEL_BASE, which
     // carries @PartModels and is therefore already registered by AE2) plus our two lights models
     // drawn on top of it. Only MODEL_OFF / MODEL_ON are ids we register with AE2's part-model baker
-    // on client startup (appeng.api.parts.PartModels#registerModels, see PartModelsRegistration),
+    // on client startup (appeng.api.parts.PartModels#registerModels, called from AeMonitorNet's
+    // constructor so it always runs before AE2 freezes the model list),
     // otherwise AE2's CableBus cannot look them up and the panel simply does not render (without any
     // "missing model" error).
     public static final ResourceLocation MODEL_BASE_PLATE = AppEng.makeId("part/display_base");

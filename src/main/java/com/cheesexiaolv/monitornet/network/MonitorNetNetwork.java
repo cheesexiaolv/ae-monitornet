@@ -44,8 +44,8 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 @EventBusSubscriber(modid = AeMonitorNet.MODID, bus = Bus.MOD)
 public final class MonitorNetNetwork {
 
-    /** 协议版本。1.20.1 用的是 {@code networkProtocolVersion(() -> "1")}，这里沿用。 */
-    private static final String PROTOCOL_VERSION = "1";
+    /** 协议版本。1.20.1 用的是 {@code networkProtocolVersion(() -> "2")}，这里沿用。 */
+    private static final String PROTOCOL_VERSION = "2";
 
     /**
      * 客户端侧的包处理入口。
@@ -87,7 +87,7 @@ public final class MonitorNetNetwork {
      * 向 NeoForge 注册本模组的载荷。
      *
      * <p>{@link PayloadRegistrar#optional()}：服务端装了本模组、客户端没装时<b>不拒绝连接</b>
-     * （1.20.1 的 {@code clientAcceptedVersions(version -> true)} 是同样的宽松语义）。
+     * （1.20.1 的 {@code clientAcceptedVersions("2"::equals)} 是同样的宽松语义）。
      * 客户端收到不认识的载荷只会被原版忽略，而不是掉线。
      */
     @SubscribeEvent

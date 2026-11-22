@@ -208,6 +208,7 @@ public final class TerminalRowsPacket implements CustomPacketPayload {
             buf.writeVarInt(this.chartRefreshIntervalTicks);
             buf.writeVarInt(this.rows.size());
             for (var row : this.rows) {
+                buf.writeVarInt(row.id());
                 AEKey.writeKey(buf, row.key());
                 buf.writeVarLong(row.amount());
                 buf.writeDouble(row.ratePerTick());
@@ -251,6 +252,7 @@ public final class TerminalRowsPacket implements CustomPacketPayload {
             int count = buf.readVarInt();
             List<TerminalRow> rows = new ArrayList<>(count);
             for (int i = 0; i < count; i++) {
+                int id = buf.readVarInt();
                 AEKey key = AEKey.readKey(buf);
                 long amount = buf.readVarLong();
                 double rate = buf.readDouble();
@@ -268,7 +270,7 @@ public final class TerminalRowsPacket implements CustomPacketPayload {
                     boolean advanced = buf.readBoolean();
                     sources.add(new TerminalRow.Source(pos, dimension, routine, advanced));
                 }
-                rows.add(new TerminalRow(key, amount, rate, hasHistory, largeUnit, rowRoutine,
+                rows.add(new TerminalRow(id, key, amount, rate, hasHistory, largeUnit, rowRoutine,
                         rowWindow, rowMetric, List.copyOf(sources)));
             }
             return full(rows, sampleIntervalTicks, chartRefreshIntervalTicks);

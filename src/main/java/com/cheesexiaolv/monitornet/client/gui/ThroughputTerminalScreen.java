@@ -312,33 +312,25 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
      */
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-
         int mx = mouseX - this.leftPos;
         int my = mouseY - this.topPos;
-        Component hint = null;
-
+        TerminalWindow hovered = windowAt(mx, my);
+        super.render(guiGraphics, hovered == null ? mouseX : -10000, hovered == null ? mouseY : -10000, partialTick);
+        if (this.windows.isEmpty()) return;
+        guiGraphics.flush();
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate((float) this.leftPos, (float) this.topPos, 400.0F);
-        for (TerminalWindow window : this.windows) {
-            window.draw(guiGraphics, this.font, this, mx, my);
-            Component windowHint = window.hintAt(mx, my, this);
-            if (windowHint != null) {
-                hint = windowHint;
-            }
+        guiGraphics.pose().translate(this.leftPos, this.topPos, 400);
+        for (var window : this.windows) {
+            // Each opaque window starts a new GUI depth layer after earlier batches finish.
+            com.mojang.blaze3d.systems.RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT, false);
+            window.draw(guiGraphics, this.font, this, window == hovered ? mx : -10000, window == hovered ? my : -10000);
+            guiGraphics.flush();
+        }
+        if (hovered != null) {
+            Component hint = hovered.hintAt(mx, my, this);
+            if (hint != null) drawClampedTooltip(guiGraphics, mouseX, mouseY, List.of(hint));
         }
         guiGraphics.pose().popPose();
-        guiGraphics.flush();
-
-        if (hint != null) {
-            // ⚠️ 这里 pose 已经回到屏幕原点（super.render 里那层 (leftPos,topPos) 平移已 pop），
-            // 而 drawClampedTooltip 内部会再减一次 leftPos/topPos，所以必须自己把这层平移补回来，
-            // 否则提示会飞到屏幕左上角（实测过）。
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate((float) this.leftPos, (float) this.topPos, 0.0F);
-            drawClampedTooltip(guiGraphics, mouseX, mouseY, List.of(hint));
-            guiGraphics.pose().popPose();
-        }
     }
 
     /**
@@ -613,7 +605,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
         int slot = this.windows.size() % 4;
         // 开窗位置错开：按已开窗口数偏移，避免叠在一起（构造里已经 clamp 回面板内）；
         // 标题文字已按用户要求删掉，窗口不再持有 title。
-        TerminalWindow window = new TerminalWindow(rowIndex,
+        TerminalWindow window = new TerminalWindow(this.menu.getRows().get(rowIndex).id(),
                 8 + slot * 12, 34 + slot * 12, this::closeWindow);
         this.windows.add(window);
 
@@ -630,7 +622,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     @Nullable
     private TerminalWindow findWindow(int rowIndex) {
         for (TerminalWindow window : this.windows) {
-            if (window.rowIndex == rowIndex) {
+            if (indexOf(window.rowId) == rowIndex) {
                 return window;
             }
         }
@@ -673,6 +665,10 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     // 个类，所以这里开几个包可见的小门面给它用——子窗口不必知道菜单/网络的细节。
     // ⚠️ 窗口按钮改档位时都是先 selectRow(rowIndex) 再发动作（那些动作只作用于"选中行"）。
     // ------------------------------------------------------------------
+
+    int indexOf(int id) {
+        return this.menu.clientIndex(id);
+    }
 
     List<TerminalRow> rows() {
         return this.menu.getRows();
@@ -848,6 +844,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
     @Override
     protected void updateBeforeRender() {
         super.updateBeforeRender();
+        this.windows.removeIf(window -> indexOf(window.rowId) < 0);
 
         if (this.menu.rowCount != this.lastRowCount) {
             this.lastRowCount = this.menu.rowCount;
@@ -865,7 +862,7 @@ public class ThroughputTerminalScreen<C extends ThroughputTerminalMenu> extends 
                 && ++this.seriesRequestCooldown >= this.menu.chartRefreshIntervalTicks()) {
             this.seriesRequestCooldown = 0;
             for (TerminalWindow window : this.windows) {
-                this.menu.sendRequestRowSeries(window.rowIndex);
+                this.menu.sendRequestRowSeries(indexOf(window.rowId));
             }
         }
     }

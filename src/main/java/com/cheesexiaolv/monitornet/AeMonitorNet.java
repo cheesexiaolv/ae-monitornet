@@ -1,7 +1,10 @@
 package com.cheesexiaolv.monitornet;
 
 import com.cheesexiaolv.monitornet.Init.ModItems;
+import com.cheesexiaolv.monitornet.Parts.ThroughputTerminalPart;
 import com.cheesexiaolv.monitornet.xmod.ae2wtlib.AE2WtLibPlugin;
+
+import appeng.api.parts.PartModels;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -13,6 +16,9 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Mod entry point for MC 1.21.1 / NeoForge 21.1.
@@ -34,6 +40,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @Mod(AeMonitorNet.MODID)
 public class AeMonitorNet {
     public static final String MODID = "ae_monitornet";
+
+    private static final Logger LOGGER = LogManager.getLogger(MODID);
 
     /**
      * Creative tab (a registry object since 1.20; unchanged in 1.21.1 apart from the
@@ -75,5 +83,26 @@ public class AeMonitorNet {
 
         // Server config: <world>/serverconfig/ae_monitornet-server.toml (hot-reloaded by NeoForge).
         modContainer.registerConfig(ModConfig.Type.SERVER, MonitorNetConfig.SPEC);
+
+        // AE2 的部件模型必须在它冻结列表之前登记：`PartModelsInternal.freeze()` 发生在第一次
+        // `ModelEvent.RegisterAdditional`（AE2 19.2.18 `InitAdditionalModels#init` 里），之后一律抛
+        // `IllegalStateException: Cannot register models after the pre-initialization phase!`。
+        //
+        // ⚠️ 以前挂在 `FMLClientSetupEvent`（客户端事件）—— 在大型整合包里不够早：有些模组的
+        // client-setup 监听器会先触发一次资源重载，模型烘焙随之发生、列表被冻结，等我们的监听器
+        // 跑到时已经晚了（2026-11-15 实机复现：AE2 19.2.18 + AQS030 包，结果是终端部件模型没登记、
+        // 该 mod 报 "Mod loading issue"）。改到 mod 构造器里登记，早于任何事件。
+        //
+        // `PartModels#registerModels` 只是往一个静态 Set 里塞 ResourceLocation，构造期调用安全
+        // （不碰注册表、不需要客户端类）；`MODEL_OFF/ON` 是普通 ResourceLocation。
+        try {
+            PartModels.registerModels(ThroughputTerminalPart.MODEL_OFF, ThroughputTerminalPart.MODEL_ON);
+            LOGGER.info("Registered 2 custom part models with AE2 (terminal_off/terminal_on)");
+        } catch (IllegalStateException e) {
+            // 只有"别的 mod 在构造期之前就把模型列表冻结了"才会走到这里；部件仍然能用，
+            // 只是终端部件表面会退回默认模型，所以只记一条明确的警告、不让整个 mod 加载失败。
+            LOGGER.warn("Could not register custom part models with AE2 (models were already frozen): {}",
+                    e.getMessage());
+        }
     }
 }

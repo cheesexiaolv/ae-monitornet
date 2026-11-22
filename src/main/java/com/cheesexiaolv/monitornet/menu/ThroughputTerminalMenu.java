@@ -182,7 +182,28 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
 
     /** 上一次发出去的结构指纹（null = 还没发过全量）。 */
     @Nullable
-    private String lastStructure;
+    private List<TerminalRow> lastStructure;
+    private final Map<AEKey, Integer> rowIds = new java.util.HashMap<>();
+    private int nextRowId;
+    private int selectedId = -1;
+
+    private int serverIndex(int id) {
+        for (int i = 0; i < this.serverRows.size(); i++) {
+            if (this.rowIds.get(this.serverRows.get(i).key) == id) return i;
+        }
+        return -1;
+    }
+
+    public int clientIndex(int id) {
+        for (int i = 0; i < this.clientRows.size(); i++) {
+            if (this.clientRows.get(i).id() == id) return i;
+        }
+        return -1;
+    }
+
+    private int clientId(int index) {
+        return index >= 0 && index < this.clientRows.size() ? this.clientRows.get(index).id() : -1;
+    }
     private long[] lastAmounts = new long[0];
     private double[] lastRates = new double[0];
 
@@ -259,15 +280,18 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
         if (grid != null) {
             Map<AEKey, ServerRow> byKey = new LinkedHashMap<>();
             collectMonitors(grid, byKey);
+            this.rowIds.keySet().retainAll(byKey.keySet());
+            for (var key : byKey.keySet()) this.rowIds.computeIfAbsent(key, ignored -> this.nextRowId++);
             this.serverRows.addAll(byKey.values());
             // 稳定排序：客户端用行序号索引，顺序必须两边一致
-            this.serverRows.sort(ROW_ORDER);
+            this.serverRows.sort(ROW_ORDER.thenComparingInt(row -> this.rowIds.get(row.key)));
         }
 
         for (var row : this.serverRows) {
             row.computeValues();
         }
         this.rowCount = this.serverRows.size();
+        this.selectedRow = serverIndex(this.selectedId);
     }
 
     /**
@@ -382,7 +406,9 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
             rates[i] = this.serverRows.get(i).ratePerTick;
         }
 
-        String structure = structureSignature();
+        var structure = this.serverRows.stream()
+                .map(row -> row.toTerminalRow(this.settings, this.rowIds.get(row.key), 0, 0))
+                .toList();
         boolean structureChanged = !structure.equals(this.lastStructure);
         boolean valuesChanged = !Arrays.equals(amounts, this.lastAmounts) || !Arrays.equals(rates, this.lastRates);
         if (!structureChanged && !valuesChanged) {
@@ -396,7 +422,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
         if (structureChanged) {
             var rows = new ArrayList<TerminalRow>(this.serverRows.size());
             for (var row : this.serverRows) {
-                rows.add(row.toTerminalRow(this.settings));
+                rows.add(row.toTerminalRow(this.settings, this.rowIds.get(row.key), row.amount, row.ratePerTick));
             }
             MonitorNetNetwork.sendToPlayer(player,
                     TerminalRowsPacket.full(rows, sampleIntervalFromConfig(), chartRefreshIntervalFromConfig()));
@@ -433,22 +459,6 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
         }
     }
 
-    /** 结构指纹：key + 来源零件身份 + 设置（设置变了就重发全量，客户端才能刷新每行的单位/档位）。 */
-    private String structureSignature() {
-        var sb = new StringBuilder();
-        for (var row : this.serverRows) {
-            var setting = this.settings.getSetting(row.key);
-            sb.append(row.key.getId()).append('/').append(row.key.getType().getId()).append('|')
-                    .append(row.monitors.size()).append('|')
-                    .append(setting.largeUnit() ? 'B' : 'b').append(setting.routineOrdinal())
-                    .append('|');
-            for (var monitor : row.monitors) {
-                sb.append(System.identityHashCode(monitor)).append(',');
-            }
-            sb.append(';');
-        }
-        return sb.toString();
-    }
 
     // ------------------------------------------------------------------
     // 客户端收到的行数据
@@ -474,7 +484,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
             this.clientSeries.keySet().removeIf(key -> !containsKey(message.rows(), key));
         } else if (message.mode() == TerminalRowsPacket.MODE_SERIES) {
             // 服务端算好的曲线：按行的 key 存下来（行序号只在收包这一刻有意义）
-            int index = message.seriesRowIndex();
+            int index = clientIndex(message.seriesRowIndex());
             if (index >= 0 && index < this.clientRows.size()) {
                 this.clientSeries.put(this.clientRows.get(index).key(), message.seriesData());
             }
@@ -489,7 +499,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
                 var old = this.clientRows.get(i);
                 long amount = i < message.amounts().length ? message.amounts()[i] : old.amount();
                 double rate = i < message.rates().length ? message.rates()[i] : old.ratePerTick();
-                updated.add(new TerminalRow(old.key(), amount, rate, old.hasHistory(), old.largeUnit(),
+                updated.add(new TerminalRow(old.id(), old.key(), amount, rate, old.hasHistory(), old.largeUnit(),
                         old.routineOrdinal(), old.windowOrdinal(), old.metricOrdinal(), old.sources()));
             }
             this.clientRows = List.copyOf(updated);
@@ -615,7 +625,8 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
     }
 
     private void selectRow(Integer index) {
-        int value = index == null ? -1 : index;
+        this.selectedId = index == null ? -1 : index;
+        int value = serverIndex(this.selectedId);
         this.selectedRow = value >= 0 && value < this.serverRows.size() ? value : -1;
         refreshSelection();
         refreshChart();
@@ -634,7 +645,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
         if (!(getPlayer() instanceof ServerPlayer player)) {
             return;
         }
-        int index = rowIndex == null ? -1 : rowIndex;
+        int index = rowIndex == null ? -1 : serverIndex(rowIndex);
         String encoded = "";
         if (index >= 0 && index < this.serverRows.size()) {
             var row = this.serverRows.get(index);
@@ -646,7 +657,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
                 encoded = ThroughputHistory.encode(series);
             }
         }
-        MonitorNetNetwork.sendToPlayer(player, TerminalRowsPacket.series(index, encoded));
+        MonitorNetNetwork.sendToPlayer(player, TerminalRowsPacket.series(rowIndex, encoded));
     }
 
 
@@ -663,7 +674,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
         if (!(getPlayer() instanceof ServerPlayer player)) {
             return;
         }
-        int index = rowIndex == null ? -1 : rowIndex;
+        int index = rowIndex == null ? -1 : serverIndex(rowIndex);
         if (index < 0 || index >= this.serverRows.size()) {
             return;
         }
@@ -786,7 +797,9 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
                 })
                 .thenComparingInt(monitor -> monitor.pos().getX())
                 .thenComparingInt(monitor -> monitor.pos().getY())
-                .thenComparingInt(monitor -> monitor.pos().getZ());
+                .thenComparingInt(monitor -> monitor.pos().getZ())
+                .thenComparingInt(IMonitorRef::routineOrdinal)
+                .thenComparing(IMonitorRef::advanced);
 
         final AEKey key;
         final List<IMonitorRef> monitors = new ArrayList<>();
@@ -841,7 +854,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
             this.ratePerTick = source.lastReportedValue() / Math.max(1, source.routineTicks());
         }
 
-        TerminalRow toTerminalRow(ITerminalSettingsHost settings) {
+        TerminalRow toTerminalRow(ITerminalSettingsHost settings, int id, long amount, double rate) {
             var setting = settings.getSetting(this.key);
             var sources = new ArrayList<TerminalRow.Source>(this.monitors.size());
             for (var monitor : this.monitors) {
@@ -852,7 +865,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
                         monitor.routineOrdinal(),
                         monitor.advanced()));
             }
-            return new TerminalRow(this.key, this.amount, this.ratePerTick, this.historySource != null,
+            return new TerminalRow(id, this.key, amount, rate, this.historySource != null,
                     setting.largeUnit(), setting.routineOrdinal(),
                     setting.window().ordinal(), setting.metric().ordinal(), List.copyOf(sources));
         }
@@ -876,7 +889,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
     }
 
     public void sendSelectRow(int index) {
-        sendClientAction("selectRow", index);
+        sendClientAction("selectRow", clientId(index));
     }
 
     /**
@@ -886,7 +899,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
      * 客户端缓存到 {@link #clientSeries}，{@link #seriesFor(int)} 优先读它。
      */
     public void sendRequestRowSeries(int rowIndex) {
-        sendClientAction("requestRowSeries", rowIndex);
+        sendClientAction("requestRowSeries", clientId(rowIndex));
     }
 
     /**
@@ -895,7 +908,7 @@ public class ThroughputTerminalMenu extends AEBaseMenu {
      * <p>服务端解析坐标后回发 {@link TerminalRowsPacket#highlight}，客户端在渲染阶段画红色描边。
      */
     public void sendLocateRow(int rowIndex) {
-        sendClientAction("locateRow", rowIndex);
+        sendClientAction("locateRow", clientId(rowIndex));
     }
 
 

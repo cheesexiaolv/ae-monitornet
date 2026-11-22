@@ -111,7 +111,7 @@ public class TerminalWindow {
     public int x;
     public int y;
     /** 本窗口盯着的行序号（打开时固定：列表滚动/翻页不会改变它盯哪一行）。 */
-    public final int rowIndex;
+    public final int rowId;
     /** 是否正在被拖动。 */
     public boolean dragging;
     /** 拖动锚点：按下时鼠标与窗口左上角的偏移（拖动时保持这个偏移 → 跟手）。 */
@@ -137,13 +137,13 @@ public class TerminalWindow {
     private boolean closeRequested;
 
     /**
-     * @param rowIndex    本窗口对应的行序号
+     * @param rowId    本窗口对应的行序号
      * @param startX      开窗时的 x（面板相对）
      * @param startY      开窗时的 y（面板相对，负值会被抬到 0）
      * @param closeAction 点关闭按钮时的回调（屏幕负责把自己从窗口列表里摘掉）
      */
-    public TerminalWindow(int rowIndex, int startX, int startY, Consumer<TerminalWindow> closeAction) {
-        this.rowIndex = rowIndex;
+    public TerminalWindow(int rowId, int startX, int startY, Consumer<TerminalWindow> closeAction) {
+        this.rowId = rowId;
         this.x = startX;
         this.y = Math.max(0, startY);
         this.closeAction = closeAction;
@@ -154,23 +154,23 @@ public class TerminalWindow {
         this.buttons.add(new WindowButton("gui.ae_monitornet.tip.metric", WIDE_BTN_W, false,
                 (row, window) -> metricLabel(row),
                 (screen, window) -> {
-                    screen.selectRow(window.rowIndex);
+                    screen.selectRow(screen.indexOf(window.rowId));
                     screen.cycleRowMetric();
-                    screen.requestRowSeries(window.rowIndex);
+                    screen.requestRowSeries(screen.indexOf(window.rowId));
                 }));
         this.buttons.add(new WindowButton("gui.ae_monitornet.tip.window", WIDE_BTN_W, false,
                 (row, window) -> windowLabel(row),
                 (screen, window) -> {
-                    screen.selectRow(window.rowIndex);
+                    screen.selectRow(screen.indexOf(window.rowId));
                     screen.cycleRowWindow();
-                    screen.requestRowSeries(window.rowIndex);
+                    screen.requestRowSeries(screen.indexOf(window.rowId));
                 }));
         this.buttons.add(new WindowButton("gui.ae_monitornet.tip.fluid", WIDE_BTN_W, true,
                 (row, window) -> unitLabel(row),
                 (screen, window) -> {
-                    screen.selectRow(window.rowIndex);
+                    screen.selectRow(screen.indexOf(window.rowId));
                     screen.toggleRowUnit();
-                    screen.requestRowSeries(window.rowIndex);
+                    screen.requestRowSeries(screen.indexOf(window.rowId));
                 }));
         this.closeButton = new WindowButton("gui.ae_monitornet.window.close", CLOSE_BTN_SIZE, false,
                 (row, window) -> Component.literal(""),
@@ -180,7 +180,7 @@ public class TerminalWindow {
         // 「定位」：短按钮 + 定位图标，固定在关闭键左侧 2px 处；没有来源时置灰不可点。
         this.locateButton = new WindowButton("gui.ae_monitornet.window.tip.locate", CLOSE_BTN_SIZE, false,
                 (row, window) -> Component.literal(""),
-                (screen, window) -> screen.locateRow(window.rowIndex));
+                (screen, window) -> screen.locateRow(screen.indexOf(window.rowId)));
     }
 
     // ------------------------------------------------------------------
@@ -335,7 +335,7 @@ public class TerminalWindow {
             return;
         }
 
-        ThroughputHistory.Series series = row == null ? null : screen.seriesFor(this.rowIndex);
+        ThroughputHistory.Series series = row == null ? null : screen.seriesFor(screen.indexOf(this.rowId));
         if (row == null || !row.hasHistory() || series == null || series.values().length < 2) {
             drawHint(guiGraphics, font, chartX, chartY, CHART_W, CHART_H,
                     Component.translatable("gui.ae_monitornet.window.no_history"));
@@ -509,7 +509,8 @@ public class TerminalWindow {
     @Nullable
     private TerminalRow rowOf(ThroughputTerminalScreen<?> screen) {
         var rows = screen.rows();
-        return this.rowIndex >= 0 && this.rowIndex < rows.size() ? rows.get(this.rowIndex) : null;
+        int index = screen.indexOf(this.rowId);
+        return index >= 0 ? rows.get(index) : null;
     }
 
     /** 鼠标是否落在显示槽上（槽位区域不触发拖动）。 */

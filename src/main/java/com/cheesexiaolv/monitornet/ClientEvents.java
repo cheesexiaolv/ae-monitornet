@@ -122,7 +122,7 @@ public class ClientEvents {
         }
 
         // 屏幕注册失败同样是"静默"的（菜单能开、但没有任何屏幕 → 客户端看不到界面，日志无痕），
-        // 所以像 PartModelsRegistration / 指南那样留一行启动日志作为"登记确实发生过"的直接证据。
+        // 所以像部件模型 / 指南那样留一行启动日志作为"登记确实发生过"的直接证据。
         LOGGER.info("Registered 3 menu screens (advanced monitor / terminal / wireless terminal)");
     }
 
